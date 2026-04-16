@@ -1,6 +1,9 @@
 package router
 
 import (
+	"backend/internal/handlers"
+	"backend/internal/middleware"
+	repository "backend/internal/repositories"
 	"database/sql"
 	"net/http"
 
@@ -10,6 +13,9 @@ import (
 
 func SetupRoutes(db *sql.DB) *gin.Engine {
 	r := gin.Default()
+
+	userRepo := repository.NewUserRepository(db)
+	userHandler := handlers.NewUserHandler(userRepo)
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
@@ -30,6 +36,18 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 
 		c.JSON(200, gin.H{"status": "Health"})
 	})
+
+	// public
+	r.POST("/register", userHandler.Register)
+	r.POST("/login", userHandler.Login)
+
+	// auth
+	api := r.Group("/api")
+	api.Use(middleware.Auth())
+	{
+		api.GET("/me", userHandler.GetMe)
+		api.GET("/users", middleware.AdminOnly(), userHandler.GetAllUsers)
+	}
 
 	return r
 }

@@ -1,3 +1,15 @@
+CREATE TABLE IF NOT EXISTS users (
+    id         SERIAL PRIMARY KEY,
+    username   VARCHAR(50)  UNIQUE NOT NULL,
+    email      VARCHAR(100) UNIQUE NOT NULL,
+    password   TEXT         NOT NULL,
+    plan       VARCHAR(20)  NOT NULL DEFAULT 'free',
+    role       VARCHAR(20)  NOT NULL DEFAULT 'user',
+    api_key    VARCHAR(64)  UNIQUE NOT NULL,
+    is_active  BOOLEAN      NOT NULL DEFAULT true,
+    created_at TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE location (
   id             SERIAL PRIMARY KEY,
   name           VARCHAR(100) NOT NULL,
@@ -36,6 +48,31 @@ CREATE INDEX idx_snapshot_location_time
   ON weather_snapshot(location_id, recorded_at DESC);
 
 -----------------------
+
+INSERT INTO users (username, email, password, plan, role, api_key, is_active, created_at)
+VALUES 
+    (
+        'admin',
+        'admin@example.com',
+        -- password : password
+        '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+        'enterprise',
+        'admin',
+        'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
+        true,
+        NOW()
+    ),
+    (
+        'testuser',
+        'test@example.com',
+        -- password : password
+        '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+        'free',
+        'user',
+        'b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3',
+        true,
+        NOW()
+    );
 
 INSERT INTO location (name, country_code, lat, lon, timezone_offset, owm_city_id)
 VALUES ('Chiang Mai', 'TH', 18.7883, 98.9853, 25200, 1153671);
