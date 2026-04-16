@@ -1,13 +1,15 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import HomePage from './pages/HomePage'
 import WeatherPage from './pages/WeatherPage'
+import ApiKeyPage from './pages/ApiKeyPage'
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<WeatherPage />} />
-        <Route path="/login" element={<div>หน้า Login (รอสร้าง)</div>} />
-        <Route path="/admin" element={<div>หน้า Admin (รอสร้าง)</div>} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/apikey" element={<ApiKeyPage />} />
+        <Route path="/api-demo" element={<WeatherPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
