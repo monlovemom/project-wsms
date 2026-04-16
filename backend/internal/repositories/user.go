@@ -28,9 +28,9 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 	apiKey := generateAPIKey()
 
 	query := `
-		INSERT INTO users (username, email, password, plan, api_key, is_active, created_at)
+		INSERT INTO users (username, email, password, plan_id, api_key, is_active, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, username, email, plan, role, api_key, is_active, created_at
+		RETURNING id, username, email, plan_id, role, api_key, is_active, created_at
 	`
 
 	var user models.UserResponse
@@ -38,7 +38,7 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 		req.Username,
 		req.Email,
 		string(hashed),
-		models.PlanFree,
+		1,
 		apiKey,
 		true,
 		time.Now(),
@@ -46,7 +46,7 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.Plan,
+		&user.PlanID,
 		&user.Role,
 		&user.APIKey,
 		&user.IsActive,
@@ -67,7 +67,7 @@ func generateAPIKey() string {
 
 func (r *UserRepository) GetUserByUsername(username string) (*models.User, error) {
 	query := `
-		SELECT id, username, email, password, plan, role, api_key, is_active, created_at
+		SELECT id, username, email, password, plan_id, role, api_key, is_active, created_at
 		FROM users WHERE username = $1
 	`
 
@@ -77,7 +77,7 @@ func (r *UserRepository) GetUserByUsername(username string) (*models.User, error
 		&user.Username,
 		&user.Email,
 		&user.Password,
-		&user.Plan,
+		&user.PlanID,
 		&user.Role,
 		&user.APIKey,
 		&user.IsActive,
@@ -92,7 +92,7 @@ func (r *UserRepository) GetUserByUsername(username string) (*models.User, error
 
 func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 	query := `
-		SELECT id, username, email, plan, role, api_key, is_active, created_at
+		SELECT id, username, email, plan_id, role, api_key, is_active, created_at
 		FROM users WHERE id = $1
 	`
 
@@ -101,7 +101,7 @@ func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.Plan,
+		&user.PlanID,
 		&user.Role,
 		&user.APIKey,
 		&user.IsActive,
@@ -119,7 +119,7 @@ func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 
 func (r *UserRepository) GetAllUsers() ([]models.UserResponse, error) {
 	query := `
-		SELECT id, username, email, plan, role, api_key, is_active, created_at
+		SELECT id, username, email, plan_id, role, api_key, is_active, created_at
 		FROM users
 	`
 
@@ -136,7 +136,7 @@ func (r *UserRepository) GetAllUsers() ([]models.UserResponse, error) {
 			&user.ID,
 			&user.Username,
 			&user.Email,
-			&user.Plan,
+			&user.PlanID,
 			&user.Role,
 			&user.APIKey,
 			&user.IsActive,

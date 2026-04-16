@@ -74,7 +74,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 			ID:        user.ID,
 			Username:  user.Username,
 			Email:     user.Email,
-			Plan:      user.Plan,
+			PlanID:    user.PlanID,
 			Role:      user.Role,
 			APIKey:    user.APIKey,
 			IsActive:  user.IsActive,
@@ -89,7 +89,7 @@ func generateJWT(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":  user.ID,
 		"username": user.Username,
-		"plan":     user.Plan,
+		"plan_id":  user.PlanID,
 		"role":     user.Role,
 		"exp":      time.Now().Add(24 * time.Hour).Unix(),
 	}

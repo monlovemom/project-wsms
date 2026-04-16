@@ -1,13 +1,22 @@
+CREATE TABLE IF NOT EXISTS plan (
+  id             SERIAL PRIMARY KEY,
+  plan_name      VARCHAR(20) UNIQUE NOT NULL,
+  req_per_minute INT         NOT NULL DEFAULT 10,
+  req_per_day    INT         NOT NULL DEFAULT 100,
+  req_per_month  INT         NOT NULL DEFAULT 1000,
+  is_active      BOOLEAN     NOT NULL DEFAULT true
+);
+
 CREATE TABLE IF NOT EXISTS users (
-    id         SERIAL PRIMARY KEY,
-    username   VARCHAR(50)  UNIQUE NOT NULL,
-    email      VARCHAR(100) UNIQUE NOT NULL,
-    password   TEXT         NOT NULL,
-    plan       VARCHAR(20)  NOT NULL DEFAULT 'free',
-    role       VARCHAR(20)  NOT NULL DEFAULT 'user',
-    api_key    VARCHAR(64)  UNIQUE NOT NULL,
-    is_active  BOOLEAN      NOT NULL DEFAULT true,
-    created_at TIMESTAMP    NOT NULL DEFAULT NOW()
+  id         SERIAL       PRIMARY KEY,
+  username   VARCHAR(50)  UNIQUE NOT NULL,
+  email      VARCHAR(100) UNIQUE NOT NULL,
+  password   TEXT         NOT NULL,
+  plan_id    INT          NOT NULL DEFAULT 1 REFERENCES plan(id),
+  role       VARCHAR(20)  NOT NULL DEFAULT 'user',
+  api_key    VARCHAR(64)  UNIQUE NOT NULL,
+  is_active  BOOLEAN      NOT NULL DEFAULT true,
+  created_at TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE location (
@@ -47,16 +56,50 @@ CREATE TABLE weather_snapshot (
 CREATE INDEX idx_snapshot_location_time 
   ON weather_snapshot(location_id, recorded_at DESC);
 
+
+
+CREATE TABLE usage_quota (
+  id               SERIAL    PRIMARY KEY,
+  user_id          INT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  quota_date       DATE      NOT NULL DEFAULT CURRENT_DATE,
+  used_today       INT       NOT NULL DEFAULT 0,
+  used_this_month  INT       NOT NULL DEFAULT 0,
+  last_request_at  TIMESTAMP,
+  reset_at         TIMESTAMP,
+  UNIQUE (user_id, quota_date)
+);
+
+CREATE INDEX idx_quota_user_date ON usage_quota(user_id, quota_date);
+
+CREATE TABLE api_usage (
+  id            BIGSERIAL  PRIMARY KEY,
+  user_id       INT        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint      VARCHAR(255),
+  method        VARCHAR(10),
+  status_code   INT,
+  response_ms   INT,
+  ip_address    INET,
+  requested_at  TIMESTAMP  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_log_user_time ON api_usage(user_id, requested_at DESC);
+CREATE INDEX idx_log_requested_at ON api_usage(requested_at DESC);
+
 -----------------------
 
-INSERT INTO users (username, email, password, plan, role, api_key, is_active, created_at)
+INSERT INTO plan (plan_name, req_per_minute, req_per_day, req_per_month) VALUES
+    ('free',       10,  100,   1000),
+    ('pro',        60,  1000,  30000),
+    ('enterprise', 120, 5000,  100000);
+
+INSERT INTO users (username, email, password, plan_id, role, api_key, is_active, created_at)
 VALUES 
     (
         'admin',
         'admin@example.com',
         -- password : password
         '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        'enterprise',
+        3,
         'admin',
         'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
         true,
@@ -67,7 +110,7 @@ VALUES
         'test@example.com',
         -- password : password
         '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        'free',
+        1,
         'user',
         'b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3',
         true,
@@ -84,7 +127,7 @@ INSERT INTO weather_snapshot (
     wind_speed, wind_deg, wind_gust, clouds_pct, sunrise, sunset
 )
 VALUES (
-    1,                   -- location_id (อ้างอิงจากตารางด้านบน)
+    1,                   -- location_id
     1713258000,          -- recorded_at (Unix Timestamp)
     'Clouds',            -- weather_main
     'มีเมฆบางส่วน',        -- weather_description

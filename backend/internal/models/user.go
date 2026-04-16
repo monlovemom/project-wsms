@@ -2,14 +2,7 @@ package models
 
 import "time"
 
-type Plan string
 type Role string
-
-const (
-	PlanFree       Plan = "free"
-	PlanPro        Plan = "pro"
-	PlanEnterprise Plan = "enterprise"
-)
 
 const (
 	RoleUser  Role = "user"
@@ -21,7 +14,7 @@ type User struct {
 	Username  string    `json:"username" db:"username"`
 	Password  string    `json:"-" db:"password"`
 	Email     string    `json:"email" db:"email"`
-	Plan      Plan      `json:"plan" db:"plan"`
+	PlanID    int       `json:"plan_id" db:"plan_id"`
 	Role      Role      `json:"role" db:"role"`
 	APIKey    string    `json:"api_key" db:"api_key"`
 	IsActive  bool      `json:"is_active" db:"is_active"`
@@ -43,7 +36,7 @@ type UserResponse struct {
 	ID        int       `json:"id"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
-	Plan      Plan      `json:"plan"`
+	PlanID    int       `json:"plan_id"`
 	Role      Role      `json:"role"`
 	APIKey    string    `json:"api_key"`
 	IsActive  bool      `json:"is_active"`
