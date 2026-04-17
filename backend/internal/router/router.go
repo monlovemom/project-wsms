@@ -16,7 +16,8 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 
 	userRepo := repository.NewUserRepository(db)
 	userHandler := handlers.NewUserHandler(userRepo)
-	weatherHandler := handlers.NewWeatherHandler()
+	weatherRepo := repository.NewWeatherRepository(db)
+	weatherHandler := handlers.NewWeatherHandler(weatherRepo)
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{

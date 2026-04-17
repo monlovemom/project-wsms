@@ -28,6 +28,20 @@ func PlanQuota(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		start := time.Now()
+		endpoint := c.FullPath()
+		if endpoint == "" {
+			endpoint = c.Request.URL.Path
+		}
+		defer func() {
+			responseMS := float64(time.Since(start).Nanoseconds()) / 1e6
+			statusCode := c.Writer.Status()
+			if statusCode == 0 {
+				statusCode = http.StatusOK
+			}
+			_ = saveAPIUsage(db, userID, endpoint, c.Request.Method, statusCode, responseMS, c.ClientIP())
+		}()
+
 		quota, err := getPlanQuotaUsage(db, userID)
 		if err == sql.ErrNoRows {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "plan is inactive or user not found"})
@@ -56,11 +70,7 @@ func PlanQuota(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		start := time.Now()
 		c.Next()
-
-		responseMS := int(time.Since(start).Milliseconds())
-		_ = saveAPIUsage(db, userID, c.FullPath(), c.Request.Method, c.Writer.Status(), responseMS, c.ClientIP())
 	}
 }
 
@@ -123,7 +133,7 @@ func getPlanQuotaUsage(db *sql.DB, userID int) (*planQuota, error) {
 	return &quota, nil
 }
 
-func saveAPIUsage(db *sql.DB, userID int, endpoint, method string, statusCode, responseMS int, ipAddress string) error {
+func saveAPIUsage(db *sql.DB, userID int, endpoint, method string, statusCode int, responseMS float64, ipAddress string) error {
 	query := `
 		INSERT INTO api_usage (user_id, endpoint, method, status_code, response_ms, ip_address)
 		VALUES ($1, $2, $3, $4, $5, $6)

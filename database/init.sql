@@ -77,7 +77,7 @@ CREATE TABLE api_usage (
   endpoint      VARCHAR(255),
   method        VARCHAR(10),
   status_code   INT,
-  response_ms   INT,
+  response_ms   DECIMAL(12,3),
   ip_address    INET,
   requested_at  TIMESTAMP  NOT NULL DEFAULT NOW()
 );
@@ -88,7 +88,7 @@ CREATE INDEX idx_log_requested_at ON api_usage(requested_at DESC);
 -----------------------
 
 INSERT INTO plan (plan_name, req_per_minute, req_per_day, req_per_month) VALUES
-    ('free',       1,  1,   1),
+    ('free',       5,  10,   1000),
     ('pro',        60,  1000,  30000),
     ('enterprise', 120, 5000,  100000);
 
@@ -118,7 +118,8 @@ VALUES
     );
 
 INSERT INTO location (name, country_code, lat, lon, timezone_offset, owm_city_id)
-VALUES ('Chiang Mai', 'TH', 18.7883, 98.9853, 25200, 1153671);
+VALUES ('Bangkok', 'TH', 13.7563, 100.5018, 25200, 1609350),
+      ('Chiang Mai', 'TH', 18.7883, 98.9853, 25200, 1153671);
 
 INSERT INTO weather_snapshot (
     location_id, recorded_at, weather_main, weather_description, weather_icon,
@@ -145,6 +146,28 @@ VALUES (
     210,                 -- wind_deg
     4.1,                 -- wind_gust
     40,                  -- clouds_pct
+    1713222000,          -- sunrise (Unix Timestamp)
+    1713267000           -- sunset (Unix Timestamp)
+),
+(
+    2,                   -- location_id
+    1713258000,          -- recorded_at (Unix Timestamp)
+    'Clear',             -- weather_main
+    'ท้องฟ้าแจ่มใส',        -- weather_description
+    '01d',               -- weather_icon
+    28.3,                -- temp
+    30.0,                -- feels_like
+    27.0,                -- temp_min
+    29.5,                -- temp_max
+    1012,                -- pressure
+    60,                  -- humidity
+    1012,                -- sea_level_pressure
+    980,                 -- grnd_level_pressure
+    10000,               -- visibility (เมตร)
+    1.0,                 -- wind_speed
+    180,                 -- wind_deg
+    2.0,                 -- wind_gust
+    10,                  -- clouds_pct
     1713222000,          -- sunrise (Unix Timestamp)
     1713267000           -- sunset (Unix Timestamp)
 );
