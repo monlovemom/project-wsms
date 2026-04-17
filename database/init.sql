@@ -14,49 +14,28 @@ CREATE TABLE IF NOT EXISTS users (
   password   TEXT         NOT NULL,
   plan_id    INT          NOT NULL DEFAULT 1 REFERENCES plan(id),
   role       VARCHAR(20)  NOT NULL DEFAULT 'user',
-  api_key    VARCHAR(64)  UNIQUE NOT NULL,
+  api_key    VARCHAR(64)  UNIQUE,
   is_active  BOOLEAN      NOT NULL DEFAULT true,
   created_at TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE location (
-  id             SERIAL PRIMARY KEY,
-  name           VARCHAR(100) NOT NULL,
-  country_code   CHAR(2),
-  lat            FLOAT,
-  lon            FLOAT,
-  timezone_offset INT,
-  owm_city_id    INT UNIQUE
+CREATE TABLE provinces (
+  id        SERIAL        PRIMARY KEY,
+  name      VARCHAR(100)  NOT NULL UNIQUE
 );
 
-CREATE TABLE weather_snapshot (
-  id                  SERIAL PRIMARY KEY,
-  location_id         INT REFERENCES location(id),
-  recorded_at         BIGINT NOT NULL,
-  weather_main        VARCHAR(50),
-  weather_description VARCHAR(100),
-  weather_icon        VARCHAR(10),
-  temp                FLOAT,
-  feels_like          FLOAT,
-  temp_min            FLOAT,
-  temp_max            FLOAT,
-  pressure            INT,
-  humidity            INT,
-  sea_level_pressure  INT,
-  grnd_level_pressure INT,
-  visibility          INT,
-  wind_speed          FLOAT,
-  wind_deg            INT,
-  wind_gust           FLOAT,
-  clouds_pct          INT,
-  sunrise             BIGINT,
-  sunset              BIGINT
+CREATE TABLE weather_logs (
+  id           SERIAL           PRIMARY KEY,
+  province_id  INT              NOT NULL REFERENCES provinces(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  temperature  DECIMAL(5, 2)   NOT NULL,
+  humidity     DECIMAL(5, 2)   NOT NULL,
+  wind_speed   DECIMAL(6, 2)   NOT NULL,
+  condition    VARCHAR(100)     NOT NULL,
+  icon         VARCHAR(10)      NULL,
+  updated_at   TIMESTAMPTZ      NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_snapshot_location_time 
-  ON weather_snapshot(location_id, recorded_at DESC);
-
-
+CREATE INDEX idx_province_updated ON weather_logs (province_id, updated_at DESC);
 
 CREATE TABLE usage_quota (
   id               SERIAL    PRIMARY KEY,
@@ -92,7 +71,7 @@ INSERT INTO plan (plan_name, req_per_minute, req_per_day, req_per_month) VALUES
     ('pro',        60,  1000,  30000),
     ('enterprise', 120, 5000,  100000);
 
-INSERT INTO users (username, email, password, plan_id, role, api_key, is_active, created_at)
+INSERT INTO users (username, email, password, plan_id, role,is_active, created_at)
 VALUES 
     (
         'admin',
@@ -101,7 +80,6 @@ VALUES
         '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
         3,
         'admin',
-        'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
         true,
         NOW()
     ),
@@ -112,62 +90,22 @@ VALUES
         '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
         1,
         'user',
-        'b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3',
         true,
         NOW()
     );
 
-INSERT INTO location (name, country_code, lat, lon, timezone_offset, owm_city_id)
-VALUES ('Bangkok', 'TH', 13.7563, 100.5018, 25200, 1609350),
-      ('Chiang Mai', 'TH', 18.7883, 98.9853, 25200, 1153671);
+INSERT INTO provinces (name) VALUES 
+  ('กรุงเทพมหานคร'),
+  ('เชียงใหม่'),
+  ('ภูเก็ต'),
+  ('ขอนแก่น'),
+  ('ชลบุรี');
 
-INSERT INTO weather_snapshot (
-    location_id, recorded_at, weather_main, weather_description, weather_icon,
-    temp, feels_like, temp_min, temp_max, pressure, humidity,
-    sea_level_pressure, grnd_level_pressure, visibility, 
-    wind_speed, wind_deg, wind_gust, clouds_pct, sunrise, sunset
-)
-VALUES (
-    1,                   -- location_id
-    1713258000,          -- recorded_at (Unix Timestamp)
-    'Clouds',            -- weather_main
-    'มีเมฆบางส่วน',        -- weather_description
-    '03d',               -- weather_icon
-    32.5,                -- temp
-    35.2,                -- feels_like
-    31.0,                -- temp_min
-    34.0,                -- temp_max
-    1008,                -- pressure
-    45,                  -- humidity
-    1008,                -- sea_level_pressure
-    970,                 -- grnd_level_pressure
-    10000,               -- visibility (เมตร)
-    2.5,                 -- wind_speed
-    210,                 -- wind_deg
-    4.1,                 -- wind_gust
-    40,                  -- clouds_pct
-    1713222000,          -- sunrise (Unix Timestamp)
-    1713267000           -- sunset (Unix Timestamp)
-),
-(
-    2,                   -- location_id
-    1713258000,          -- recorded_at (Unix Timestamp)
-    'Clear',             -- weather_main
-    'ท้องฟ้าแจ่มใส',        -- weather_description
-    '01d',               -- weather_icon
-    28.3,                -- temp
-    30.0,                -- feels_like
-    27.0,                -- temp_min
-    29.5,                -- temp_max
-    1012,                -- pressure
-    60,                  -- humidity
-    1012,                -- sea_level_pressure
-    980,                 -- grnd_level_pressure
-    10000,               -- visibility (เมตร)
-    1.0,                 -- wind_speed
-    180,                 -- wind_deg
-    2.0,                 -- wind_gust
-    10,                  -- clouds_pct
-    1713222000,          -- sunrise (Unix Timestamp)
-    1713267000           -- sunset (Unix Timestamp)
-);
+INSERT INTO weather_logs
+  (province_id, temperature, humidity, wind_speed, condition, icon, updated_at)
+VALUES
+  (1, 34, 64, 25, 'แดดจัด',       '☀️',  '2026-04-17 10:00:00.000'),
+  (2, 28, 72, 15, 'มีเมฆบางส่วน', '⛅',  '2026-04-17 10:00:00.000'),
+  (3, 33, 80, 30, 'ฝนตกเล็กน้อย', '🌧️', '2026-04-17 10:00:00.000'),
+  (4, 36, 55, 10, 'ร้อนจัด',      '🌡️', '2026-04-17 10:00:00.000'),
+  (5, 32, 75, 20, 'มีเมฆมาก',     '☁️',  '2026-04-17 10:00:00.000');

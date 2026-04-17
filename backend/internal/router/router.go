@@ -6,6 +6,7 @@ import (
 	repository "backend/internal/repositories"
 	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -39,29 +40,47 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		c.JSON(200, gin.H{"status": "Health"})
 	})
 
-	// public
+	// POST /register (username + email + password)
 	r.POST("/register", userHandler.Register)
+	// POST /login (username + password)
 	r.POST("/login", userHandler.Login)
 
 	// auth
 	api := r.Group("/api")
-	api.Use(middleware.Auth(), middleware.PlanQuota(db))
+	api.Use(middleware.Auth())
 	{
+		// GET /me
 		api.GET("/me", userHandler.GetMe)
-
+		// POST /api/api-key
+		api.POST("/api-key", userHandler.CreateAPIKey)
+		// GET /api/api-key
+		api.GET("/api-key", userHandler.GetAPIKey)
+		// DELETE /api/api-key
+		api.DELETE("/api-key", userHandler.DeleteAPIKey)
 	}
 
 	// admin
 	admin := r.Group("/api")
-	admin.Use(middleware.Auth(), middleware.PlanQuota(db), middleware.RoleRequired("admin"))
+	admin.Use(middleware.Auth(), middleware.RoleRequired("admin"))
 	{
+		// GET /api/users
 		admin.GET("/users", userHandler.GetAllUsers)
 	}
 
+	// weather
 	weather := r.Group("/api")
 	weather.Use(middleware.ApiKeyAuth(db), middleware.PlanQuota(db))
 	{
+		// GET /api/weather or /api/weather?province=เชียงใหม่
 		weather.GET("/weather", weatherHandler.GetWeather)
+	}
+
+	// public weather preview
+	preview := r.Group("/api/public")
+	preview.Use(middleware.IPRateLimit(10, time.Minute))
+	{
+		// GET /api/public/weather or /api/public/weather?province=เชียงใหม่
+		preview.GET("/weather", weatherHandler.GetWeather)
 	}
 
 	return r

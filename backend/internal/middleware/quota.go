@@ -28,7 +28,6 @@ func PlanQuota(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		start := time.Now()
 		endpoint := c.FullPath()
 		if endpoint == "" {
 			endpoint = c.Request.URL.Path
@@ -44,23 +43,35 @@ func PlanQuota(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if quota.UsedPerMinute >= quota.ReqPerMinute || quota.UsedPerDay >= quota.ReqPerDay || quota.UsedPerMonth >= quota.ReqPerMonth {
+		if quota.UsedPerMinute >= quota.ReqPerMinute {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
-				"error": "quota exceeded",
+				"error": "rate limit exceeded (per minute)",
 				"plan":  quota.PlanName,
-				"limits": gin.H{
-					"req_per_minute": quota.ReqPerMinute,
-					"req_per_day":    quota.ReqPerDay,
-					"req_per_month":  quota.ReqPerMonth,
-				},
-				"used": gin.H{
-					"req_per_minute": quota.UsedPerMinute,
-					"req_per_day":    quota.UsedPerDay,
-					"req_per_month":  quota.UsedPerMonth,
-				},
+				"limit": quota.ReqPerMinute,
+				"used":  quota.UsedPerMinute,
 			})
 			return
 		}
+		if quota.UsedPerDay >= quota.ReqPerDay {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"error": "quota exceeded (per day)",
+				"plan":  quota.PlanName,
+				"limit": quota.ReqPerDay,
+				"used":  quota.UsedPerDay,
+			})
+			return
+		}
+		if quota.UsedPerMonth >= quota.ReqPerMonth {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"error": "quota exceeded (per month)",
+				"plan":  quota.PlanName,
+				"limit": quota.ReqPerMonth,
+				"used":  quota.UsedPerMonth,
+			})
+			return
+		}
+
+		start := time.Now()
 
 		defer func() {
 			responseMS := float64(time.Since(start).Nanoseconds()) / 1e6

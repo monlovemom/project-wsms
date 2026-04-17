@@ -25,11 +25,9 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 		return nil, err
 	}
 
-	apiKey := generateAPIKey()
-
 	query := `
-		INSERT INTO users (username, email, password, plan_id, api_key, is_active, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO users (username, email, password, is_active, created_at)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, username, email, plan_id, role, api_key, is_active, created_at
 	`
 
@@ -38,8 +36,6 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 		req.Username,
 		req.Email,
 		string(hashed),
-		1,
-		apiKey,
 		true,
 		time.Now(),
 	).Scan(
@@ -63,6 +59,44 @@ func generateAPIKey() string {
 	b := make([]byte, 32)
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)
+}
+
+func (r *UserRepository) GenerateAPIKey(userID int) (string, error) {
+	apiKey := generateAPIKey()
+
+	query := `UPDATE users SET api_key = $1 WHERE id = $2 AND is_active = true RETURNING api_key`
+
+	var key string
+	err := r.DB.QueryRow(query, apiKey, userID).Scan(&key)
+	if err != nil {
+		return "", err
+	}
+	return key, nil
+}
+
+func (r *UserRepository) DeleteAPIKey(userID int) error {
+	query := `UPDATE users SET api_key = NULL WHERE id = $1 AND is_active = true`
+
+	res, err := r.DB.Exec(query, userID)
+	if err != nil {
+		return err
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+func (r *UserRepository) GetAPIKey(userID int) (*string, error) {
+	query := `SELECT api_key FROM users WHERE id = $1 AND is_active = true`
+
+	var apiKey *string
+	err := r.DB.QueryRow(query, userID).Scan(&apiKey)
+	if err != nil {
+		return nil, err
+	}
+	return apiKey, nil
 }
 
 func (r *UserRepository) GetUserByUsername(username string) (*models.User, error) {

@@ -14,52 +14,60 @@ func NewWeatherRepository(db *sql.DB) *WeatherRepository {
 	return &WeatherRepository{DB: db}
 }
 
-func (r *WeatherRepository) GetLatestByCity(city string) (*models.WeatherResponse, error) {
-	city = strings.TrimSpace(city)
+func (r *WeatherRepository) GetLatestByProvince(province string) (*models.WeatherResponse, error) {
+	province = strings.TrimSpace(province)
 
 	query := `
 		SELECT
-			l.name AS city_name,
-			ws.temp,
-			ws.weather_description,
-			ws.temp_min,
-			ws.temp_max,
-			TO_TIMESTAMP(ws.recorded_at) AS recorded_at
-		FROM location l
-		JOIN weather_snapshot ws ON ws.location_id = l.id
-		WHERE LOWER(l.name) = LOWER($1)
-		ORDER BY ws.recorded_at DESC
+			p.name AS province_name,
+			wl.temperature,
+			wl.humidity,
+			wl.wind_speed,
+			wl.condition,
+			wl.icon,
+			wl.updated_at
+		FROM provinces p
+		JOIN weather_logs wl ON wl.province_id = p.id
+		WHERE LOWER(p.name) = LOWER($1)
+		ORDER BY wl.updated_at DESC
 		LIMIT 1
 	`
 
-	var weather models.WeatherResponse
-	err := r.DB.QueryRow(query, city).Scan(
-		&weather.CityName,
-		&weather.Temp,
-		&weather.WeatherDescription,
-		&weather.TempMin,
-		&weather.TempMax,
-		&weather.RecordedAt,
+	var provinceName string
+	var data models.WeatherData
+	err := r.DB.QueryRow(query, province).Scan(
+		&provinceName,
+		&data.Temperature,
+		&data.Humidity,
+		&data.WindSpeed,
+		&data.Condition,
+		&data.Icon,
+		&data.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &weather, nil
+	return &models.WeatherResponse{
+		Status:   "ok",
+		Province: provinceName,
+		Data:     data,
+	}, nil
 }
 
-func (r *WeatherRepository) GetAll() ([]models.WeatherResponse, error) {
+func (r *WeatherRepository) GetAll() ([]models.WeatherItem, error) {
 	query := `
 		SELECT
-			l.name AS city_name,
-			ws.temp,
-			ws.weather_description,
-			ws.temp_min,
-			ws.temp_max,
-			TO_TIMESTAMP(ws.recorded_at) AS recorded_at
-		FROM location l
-		JOIN weather_snapshot ws ON ws.location_id = l.id
-		ORDER BY ws.recorded_at DESC
+			p.name AS province_name,
+			wl.temperature,
+			wl.humidity,
+			wl.wind_speed,
+			wl.condition,
+			wl.icon,
+			wl.updated_at
+		FROM provinces p
+		JOIN weather_logs wl ON wl.province_id = p.id
+		ORDER BY wl.updated_at DESC
 	`
 
 	rows, err := r.DB.Query(query)
@@ -68,22 +76,27 @@ func (r *WeatherRepository) GetAll() ([]models.WeatherResponse, error) {
 	}
 	defer rows.Close()
 
-	var weatherList []models.WeatherResponse
+	var items []models.WeatherItem
 	for rows.Next() {
-		var weather models.WeatherResponse
+		var provinceName string
+		var data models.WeatherData
 		err := rows.Scan(
-			&weather.CityName,
-			&weather.Temp,
-			&weather.WeatherDescription,
-			&weather.TempMin,
-			&weather.TempMax,
-			&weather.RecordedAt,
+			&provinceName,
+			&data.Temperature,
+			&data.Humidity,
+			&data.WindSpeed,
+			&data.Condition,
+			&data.Icon,
+			&data.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		weatherList = append(weatherList, weather)
+		items = append(items, models.WeatherItem{
+			Province: provinceName,
+			Data:     data,
+		})
 	}
 
-	return weatherList, nil
+	return items, nil
 }

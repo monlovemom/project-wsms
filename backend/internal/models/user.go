@@ -16,7 +16,7 @@ type User struct {
 	Email     string    `json:"email" db:"email"`
 	PlanID    int       `json:"plan_id" db:"plan_id"`
 	Role      Role      `json:"role" db:"role"`
-	APIKey    string    `json:"api_key" db:"api_key"`
+	APIKey    *string   `json:"api_key" db:"api_key"`
 	IsActive  bool      `json:"is_active" db:"is_active"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
@@ -38,7 +38,7 @@ type UserResponse struct {
 	Email     string    `json:"email"`
 	PlanID    int       `json:"plan_id"`
 	Role      Role      `json:"role"`
-	APIKey    string    `json:"api_key"`
+	APIKey    *string   `json:"api_key"`
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 }
