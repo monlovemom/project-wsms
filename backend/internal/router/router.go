@@ -46,7 +46,14 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	api.Use(middleware.Auth())
 	{
 		api.GET("/me", userHandler.GetMe)
-		api.GET("/users", middleware.AdminOnly(), userHandler.GetAllUsers)
+
+	}
+
+	// admin
+	admin := r.Group("/api")
+	admin.Use(middleware.Auth(), middleware.RoleRequired("admin"))
+	{
+		admin.GET("/users", userHandler.GetAllUsers)
 	}
 
 	return r
