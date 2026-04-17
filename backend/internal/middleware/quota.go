@@ -33,14 +33,6 @@ func PlanQuota(db *sql.DB) gin.HandlerFunc {
 		if endpoint == "" {
 			endpoint = c.Request.URL.Path
 		}
-		defer func() {
-			responseMS := float64(time.Since(start).Nanoseconds()) / 1e6
-			statusCode := c.Writer.Status()
-			if statusCode == 0 {
-				statusCode = http.StatusOK
-			}
-			_ = saveAPIUsage(db, userID, endpoint, c.Request.Method, statusCode, responseMS, c.ClientIP())
-		}()
 
 		quota, err := getPlanQuotaUsage(db, userID)
 		if err == sql.ErrNoRows {
@@ -69,6 +61,15 @@ func PlanQuota(db *sql.DB) gin.HandlerFunc {
 			})
 			return
 		}
+
+		defer func() {
+			responseMS := float64(time.Since(start).Nanoseconds()) / 1e6
+			statusCode := c.Writer.Status()
+			if statusCode == 0 {
+				statusCode = http.StatusOK
+			}
+			_ = saveAPIUsage(db, userID, endpoint, c.Request.Method, statusCode, responseMS, c.ClientIP())
+		}()
 
 		c.Next()
 	}
