@@ -88,7 +88,7 @@ CREATE INDEX idx_log_requested_at ON api_usage(requested_at DESC);
 -----------------------
 
 INSERT INTO plan (plan_name, req_per_minute, req_per_day, req_per_month) VALUES
-    ('free',       10,  100,   1000),
+    ('free',       1,  1,   1),
     ('pro',        60,  1000,  30000),
     ('enterprise', 120, 5000,  100000);
 

@@ -16,6 +16,7 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 
 	userRepo := repository.NewUserRepository(db)
 	userHandler := handlers.NewUserHandler(userRepo)
+	weatherHandler := handlers.NewWeatherHandler()
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
@@ -24,7 +25,7 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 			"http://localhost",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "x-api-key"},
 		AllowCredentials: true,
 	}))
 
@@ -43,7 +44,7 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 
 	// auth
 	api := r.Group("/api")
-	api.Use(middleware.Auth())
+	api.Use(middleware.Auth(), middleware.PlanQuota(db))
 	{
 		api.GET("/me", userHandler.GetMe)
 
@@ -51,9 +52,15 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 
 	// admin
 	admin := r.Group("/api")
-	admin.Use(middleware.Auth(), middleware.RoleRequired("admin"))
+	admin.Use(middleware.Auth(), middleware.PlanQuota(db), middleware.RoleRequired("admin"))
 	{
 		admin.GET("/users", userHandler.GetAllUsers)
+	}
+
+	weather := r.Group("/api")
+	weather.Use(middleware.ApiKeyAuth(db), middleware.PlanQuota(db))
+	{
+		weather.GET("/weather", weatherHandler.GetWeather)
 	}
 
 	return r
