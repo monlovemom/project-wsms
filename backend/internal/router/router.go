@@ -40,6 +40,24 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		c.JSON(200, gin.H{"status": "Health"})
 	})
 
+	r.GET("/api/provinces", func(c *gin.Context) {
+    rows, err := db.Query("SELECT id, name, name_en FROM provinces")
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var provinces []gin.H
+    for rows.Next() {
+        var id int
+        var name, name_en string
+        rows.Scan(&id, &name, &name_en)
+        provinces = append(provinces, gin.H{"id": id, "name": name, "name_en": name_en})
+    }
+    c.JSON(200, provinces)
+})
+
 	// POST /register (username + email + password)
 	r.POST("/register", userHandler.Register)
 	// POST /login (username + password)
