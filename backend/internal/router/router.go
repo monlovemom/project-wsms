@@ -71,7 +71,8 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	weather := r.Group("/api")
 	weather.Use(middleware.ApiKeyAuth(db), middleware.PlanQuota(db))
 	{
-		// GET /api/weather or /api/weather?province=เชียงใหม่
+		// GET /api/weather?lang=th or /api/weather?lang=en
+		// GET /api/weather?province=เชียงใหม่&lang=th or /api/weather?province=Chiang Mai&lang=en
 		weather.GET("/weather", weatherHandler.GetWeather)
 	}
 
@@ -79,7 +80,8 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	preview := r.Group("/api/public")
 	preview.Use(middleware.IPRateLimit(10, time.Minute))
 	{
-		// GET /api/public/weather or /api/public/weather?province=เชียงใหม่
+		// GET /api/public/weather?lang=th or /api/public/weather?lang=en
+		// GET /api/public/weather?province=เชียงใหม่&lang=th or /api/public/weather?province=Chiang Mai&lang=en
 		preview.GET("/weather", weatherHandler.GetWeather)
 	}
 

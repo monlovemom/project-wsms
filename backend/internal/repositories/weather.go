@@ -14,21 +14,30 @@ func NewWeatherRepository(db *sql.DB) *WeatherRepository {
 	return &WeatherRepository{DB: db}
 }
 
-func (r *WeatherRepository) GetLatestByProvince(province string) (*models.WeatherResponse, error) {
+func (r *WeatherRepository) GetLatestByProvince(province string, lang string) (*models.WeatherResponse, error) {
 	province = strings.TrimSpace(province)
+
+	nameCol := "p.name"
+	condCol := "wl.condition"
+	nameMatch := "LOWER(p.name) = LOWER($1)"
+	if lang == "en" {
+		nameCol = "p.name_en"
+		condCol = "wl.condition_en"
+		nameMatch = "LOWER(p.name_en) = LOWER($1)"
+	}
 
 	query := `
 		SELECT
-			p.name AS province_name,
+			` + nameCol + ` AS province_name,
 			wl.temperature,
 			wl.humidity,
 			wl.wind_speed,
-			wl.condition,
+			` + condCol + ` AS condition,
 			wl.icon,
 			wl.updated_at
 		FROM provinces p
 		JOIN weather_logs wl ON wl.province_id = p.id
-		WHERE LOWER(p.name) = LOWER($1)
+		WHERE ` + nameMatch + `
 		ORDER BY wl.updated_at DESC
 		LIMIT 1
 	`
@@ -55,14 +64,21 @@ func (r *WeatherRepository) GetLatestByProvince(province string) (*models.Weathe
 	}, nil
 }
 
-func (r *WeatherRepository) GetAll() ([]models.WeatherItem, error) {
+func (r *WeatherRepository) GetAll(lang string) ([]models.WeatherItem, error) {
+	nameCol := "p.name"
+	condCol := "wl.condition"
+	if lang == "en" {
+		nameCol = "p.name_en"
+		condCol = "wl.condition_en"
+	}
+
 	query := `
 		SELECT
-			p.name AS province_name,
+			` + nameCol + ` AS province_name,
 			wl.temperature,
 			wl.humidity,
 			wl.wind_speed,
-			wl.condition,
+			` + condCol + ` AS condition,
 			wl.icon,
 			wl.updated_at
 		FROM provinces p
