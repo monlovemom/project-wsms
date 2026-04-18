@@ -35,7 +35,6 @@ export default function ThailandMap({ onSelectProvince, currentWeather, lang, pr
             {({ geographies }) =>
               geographies.map((geo) => {
                 const data = getProvinceData(geo)
-                // ตรวจสอบสถานะการเลือกโดยใช้ชื่อไทยหรืออังกฤษ
                 const isSelected = selectedID === geo.rsmKey || (currentWeather && (data.en === currentWeather.rawName || data.th === currentWeather.name))
                 
                 return (
