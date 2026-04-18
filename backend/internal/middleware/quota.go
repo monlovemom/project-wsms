@@ -79,7 +79,13 @@ func PlanQuota(db *sql.DB) gin.HandlerFunc {
 			if statusCode == 0 {
 				statusCode = http.StatusOK
 			}
-			_ = saveAPIUsage(db, userID, endpoint, c.Request.Method, statusCode, responseMS, c.ClientIP())
+			var apiKeyID *int
+			if raw, exists := c.Get("api_key_id"); exists {
+				if id, ok := raw.(int); ok {
+					apiKeyID = &id
+				}
+			}
+			_ = saveAPIUsage(db, userID, apiKeyID, endpoint, c.Request.Method, statusCode, responseMS, c.ClientIP())
 		}()
 
 		c.Next()
@@ -145,12 +151,12 @@ func getPlanQuotaUsage(db *sql.DB, userID int) (*planQuota, error) {
 	return &quota, nil
 }
 
-func saveAPIUsage(db *sql.DB, userID int, endpoint, method string, statusCode int, responseMS float64, ipAddress string) error {
+func saveAPIUsage(db *sql.DB, userID int, apiKeyID *int, endpoint, method string, statusCode int, responseMS float64, ipAddress string) error {
 	query := `
-		INSERT INTO api_usage (user_id, endpoint, method, status_code, response_ms, ip_address)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO api_usage (user_id, api_key_id, endpoint, method, status_code, response_ms, ip_address)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
-	_, err := db.Exec(query, userID, endpoint, method, statusCode, responseMS, ipAddress)
+	_, err := db.Exec(query, userID, apiKeyID, endpoint, method, statusCode, responseMS, ipAddress)
 	return err
 }

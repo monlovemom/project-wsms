@@ -41,22 +41,22 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	})
 
 	r.GET("/api/provinces", func(c *gin.Context) {
-    rows, err := db.Query("SELECT id, name, name_en FROM provinces")
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    defer rows.Close()
-    
-    var provinces []gin.H
-    for rows.Next() {
-        var id int
-        var name, name_en string
-        rows.Scan(&id, &name, &name_en)
-        provinces = append(provinces, gin.H{"id": id, "name": name, "name_en": name_en})
-    }
-    c.JSON(200, provinces)
-})
+		rows, err := db.Query("SELECT id, name, name_en FROM provinces")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		var provinces []gin.H
+		for rows.Next() {
+			var id int
+			var name, name_en string
+			rows.Scan(&id, &name, &name_en)
+			provinces = append(provinces, gin.H{"id": id, "name": name, "name_en": name_en})
+		}
+		c.JSON(200, provinces)
+	})
 
 	// POST /register (username + email + password)
 	r.POST("/register", userHandler.Register)
@@ -69,12 +69,14 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	{
 		// GET /me
 		api.GET("/me", userHandler.GetMe)
-		// POST /api/api-key
-		api.POST("/api-key", userHandler.CreateAPIKey)
 		// GET /api/api-key
 		api.GET("/api-key", userHandler.GetAPIKey)
-		// DELETE /api/api-key
-		api.DELETE("/api-key", userHandler.DeleteAPIKey)
+		// GET /api/api-key/id
+		api.GET("/api-key/:id", userHandler.GetAPIKeyByID)
+		// POST /api/api-key
+		api.POST("/api-key", userHandler.CreateAPIKey)
+		// DELETE /api/api-key/id
+		api.DELETE("/api-key/:id", userHandler.DeleteAPIKey)
 	}
 
 	// admin

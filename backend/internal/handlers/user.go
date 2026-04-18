@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -67,18 +68,15 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
+	userResp, err := h.repo.GetUserByID(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get user"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
-		"user": models.UserResponse{
-			ID:        user.ID,
-			Username:  user.Username,
-			Email:     user.Email,
-			PlanID:    user.PlanID,
-			Role:      user.Role,
-			APIKey:    user.APIKey,
-			IsActive:  user.IsActive,
-			CreatedAt: user.CreatedAt,
-		},
+		"user":  userResp,
 	})
 }
 
@@ -149,23 +147,28 @@ func (h *UserHandler) CreateAPIKey(c *gin.Context) {
 		return
 	}
 
-	existing, err := h.repo.GetAPIKey(userID)
+	keys, err := h.repo.GetAPIKeys(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not check api key"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not check api keys"})
 		return
 	}
-	if existing != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "api key already exists, delete it first to create a new one"})
+	if len(keys) >= 5 {
+		c.JSON(http.StatusConflict, gin.H{"error": "maximum 5 api keys allowed"})
 		return
 	}
 
-	apiKey, err := h.repo.GenerateAPIKey(userID)
+	var req models.CreateAPIKeyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		req.Name = "default"
+	}
+
+	apiKey, err := h.repo.CreateAPIKey(userID, req.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate api key"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"api_key": apiKey})
+	c.JSON(http.StatusCreated, apiKey)
 }
 
 func (h *UserHandler) GetAPIKey(c *gin.Context) {
@@ -175,13 +178,39 @@ func (h *UserHandler) GetAPIKey(c *gin.Context) {
 		return
 	}
 
-	apiKey, err := h.repo.GetAPIKey(userID)
+	keys, err := h.repo.GetAPIKeys(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get api keys"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"api_keys": keys, "total": len(keys)})
+}
+
+func (h *UserHandler) GetAPIKeyByID(c *gin.Context) {
+	userID, err := extractUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	keyID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid key id"})
+		return
+	}
+
+	key, err := h.repo.GetAPIKeyByID(userID, keyID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get api key"})
 		return
 	}
+	if key == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "api key not found"})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{"api_key": apiKey})
+	c.JSON(http.StatusOK, key)
 }
 
 func (h *UserHandler) DeleteAPIKey(c *gin.Context) {
@@ -191,7 +220,14 @@ func (h *UserHandler) DeleteAPIKey(c *gin.Context) {
 		return
 	}
 
-	if err := h.repo.DeleteAPIKey(userID); err != nil {
+	keyIDStr := c.Param("id")
+	keyID, err := strconv.Atoi(keyIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid key id"})
+		return
+	}
+
+	if err := h.repo.DeleteAPIKey(userID, keyID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete api key"})
 		return
 	}

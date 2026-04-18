@@ -28,7 +28,7 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 	query := `
 		INSERT INTO users (username, email, password, is_active, created_at)
 		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, username, email, plan_id, role, api_key, is_active, created_at
+		RETURNING id, username, email, (SELECT plan_name FROM plan WHERE id = plan_id), role, is_active, created_at
 	`
 
 	var user models.UserResponse
@@ -42,9 +42,8 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.PlanID,
+		&user.PlanName,
 		&user.Role,
-		&user.APIKey,
 		&user.IsActive,
 		&user.CreatedAt,
 	)
@@ -61,23 +60,81 @@ func generateAPIKey() string {
 	return fmt.Sprintf("%x", b)
 }
 
-func (r *UserRepository) GenerateAPIKey(userID int) (string, error) {
-	apiKey := generateAPIKey()
-
-	query := `UPDATE users SET api_key = $1 WHERE id = $2 AND is_active = true RETURNING api_key`
-
-	var key string
-	err := r.DB.QueryRow(query, apiKey, userID).Scan(&key)
-	if err != nil {
-		return "", err
+func (r *UserRepository) CreateAPIKey(userID int, name string) (*models.APIKey, error) {
+	key := generateAPIKey()
+	if name == "" {
+		name = "default"
 	}
-	return key, nil
+
+	query := `
+		INSERT INTO api_keys (user_id, key, name, is_active, created_at)
+		VALUES ($1, $2, $3, true, NOW())
+		RETURNING id, user_id, key, name, is_active, created_at
+	`
+
+	var apiKey models.APIKey
+	err := r.DB.QueryRow(query, userID, key, name).Scan(
+		&apiKey.ID,
+		&apiKey.UserID,
+		&apiKey.Key,
+		&apiKey.Name,
+		&apiKey.IsActive,
+		&apiKey.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &apiKey, nil
 }
 
-func (r *UserRepository) DeleteAPIKey(userID int) error {
-	query := `UPDATE users SET api_key = NULL WHERE id = $1 AND is_active = true`
+func (r *UserRepository) GetAPIKeys(userID int) ([]models.APIKey, error) {
+	query := `
+		SELECT id, user_id, key, name, is_active, created_at
+		FROM api_keys
+		WHERE user_id = $1 AND is_active = true
+		ORDER BY created_at DESC
+	`
 
-	res, err := r.DB.Exec(query, userID)
+	rows, err := r.DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keys []models.APIKey
+	for rows.Next() {
+		var k models.APIKey
+		err := rows.Scan(&k.ID, &k.UserID, &k.Key, &k.Name, &k.IsActive, &k.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, nil
+}
+
+func (r *UserRepository) GetAPIKeyByID(userID int, keyID int) (*models.APIKey, error) {
+	query := `
+		SELECT id, user_id, key, name, is_active, created_at
+		FROM api_keys
+		WHERE id = $1 AND user_id = $2 AND is_active = true
+	`
+
+	var k models.APIKey
+	err := r.DB.QueryRow(query, keyID, userID).Scan(&k.ID, &k.UserID, &k.Key, &k.Name, &k.IsActive, &k.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &k, nil
+}
+
+func (r *UserRepository) DeleteAPIKey(userID int, keyID int) error {
+	query := `DELETE FROM api_keys WHERE id = $1 AND user_id = $2`
+
+	res, err := r.DB.Exec(query, keyID, userID)
 	if err != nil {
 		return err
 	}
@@ -88,20 +145,9 @@ func (r *UserRepository) DeleteAPIKey(userID int) error {
 	return nil
 }
 
-func (r *UserRepository) GetAPIKey(userID int) (*string, error) {
-	query := `SELECT api_key FROM users WHERE id = $1 AND is_active = true`
-
-	var apiKey *string
-	err := r.DB.QueryRow(query, userID).Scan(&apiKey)
-	if err != nil {
-		return nil, err
-	}
-	return apiKey, nil
-}
-
 func (r *UserRepository) GetUserByUsername(username string) (*models.User, error) {
 	query := `
-		SELECT id, username, email, password, plan_id, role, api_key, is_active, created_at
+		SELECT id, username, email, password, plan_id, role, is_active, created_at
 		FROM users WHERE username = $1
 	`
 
@@ -113,7 +159,6 @@ func (r *UserRepository) GetUserByUsername(username string) (*models.User, error
 		&user.Password,
 		&user.PlanID,
 		&user.Role,
-		&user.APIKey,
 		&user.IsActive,
 		&user.CreatedAt,
 	)
@@ -126,8 +171,8 @@ func (r *UserRepository) GetUserByUsername(username string) (*models.User, error
 
 func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 	query := `
-		SELECT id, username, email, plan_id, role, api_key, is_active, created_at
-		FROM users WHERE id = $1
+		SELECT u.id, u.username, u.email, p.plan_name, u.role, u.is_active, u.created_at
+		FROM users u JOIN plan p ON u.plan_id = p.id WHERE u.id = $1
 	`
 
 	var user models.UserResponse
@@ -135,9 +180,8 @@ func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.PlanID,
+		&user.PlanName,
 		&user.Role,
-		&user.APIKey,
 		&user.IsActive,
 		&user.CreatedAt,
 	)
@@ -153,8 +197,8 @@ func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 
 func (r *UserRepository) GetAllUsers() ([]models.UserResponse, error) {
 	query := `
-		SELECT id, username, email, plan_id, role, api_key, is_active, created_at
-		FROM users
+		SELECT u.id, u.username, u.email, p.plan_name, u.role, u.is_active, u.created_at
+		FROM users u JOIN plan p ON u.plan_id = p.id
 	`
 
 	rows, err := r.DB.Query(query)
@@ -170,9 +214,8 @@ func (r *UserRepository) GetAllUsers() ([]models.UserResponse, error) {
 			&user.ID,
 			&user.Username,
 			&user.Email,
-			&user.PlanID,
+			&user.PlanName,
 			&user.Role,
-			&user.APIKey,
 			&user.IsActive,
 			&user.CreatedAt,
 		)

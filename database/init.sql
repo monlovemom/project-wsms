@@ -14,10 +14,21 @@ CREATE TABLE IF NOT EXISTS users (
   password   TEXT         NOT NULL,
   plan_id    INT          NOT NULL DEFAULT 1 REFERENCES plan(id),
   role       VARCHAR(20)  NOT NULL DEFAULT 'user',
-  api_key    VARCHAR(64)  UNIQUE,
   is_active  BOOLEAN      NOT NULL DEFAULT true,
   created_at TIMESTAMP    NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS api_keys (
+  id         SERIAL       PRIMARY KEY,
+  user_id    INT          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  key        VARCHAR(64)  UNIQUE NOT NULL,
+  name       VARCHAR(100) NOT NULL DEFAULT 'default',
+  is_active  BOOLEAN      NOT NULL DEFAULT true,
+  created_at TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_api_keys_user ON api_keys(user_id);
+CREATE INDEX idx_api_keys_key ON api_keys(key);
 
 CREATE TABLE provinces (
   id        SERIAL        PRIMARY KEY,
@@ -55,6 +66,7 @@ CREATE INDEX idx_quota_user_date ON usage_quota(user_id, quota_date);
 CREATE TABLE api_usage (
   id            BIGSERIAL  PRIMARY KEY,
   user_id       INT        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  api_key_id    INT        REFERENCES api_keys(id) ON DELETE SET NULL,
   endpoint      VARCHAR(255),
   method        VARCHAR(10),
   status_code   INT,
