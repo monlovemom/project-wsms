@@ -38,26 +38,24 @@ func Auth() gin.HandlerFunc {
 	}
 }
 
-func AdminOnly() gin.HandlerFunc {
+func RoleRequired(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		raw, exists := c.Get("claims")
+		claims, exists := c.Get("claims")
 		if !exists {
-			c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
+			c.AbortWithStatusJSON(401, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		claims, ok := raw.(jwt.MapClaims)
-		if !ok {
-			c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
-			return
+		mapClaims := claims.(jwt.MapClaims)
+		userRole, _ := mapClaims["role"].(string)
+
+		for _, r := range roles {
+			if r == userRole {
+				c.Next()
+				return
+			}
 		}
 
-		role, _ := claims["role"].(string)
-		if role != "admin" {
-			c.AbortWithStatusJSON(403, gin.H{"error": "Admin only JUBJUB"})
-			return
-		}
-
-		c.Next()
+		c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
 	}
 }
