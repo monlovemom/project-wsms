@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE provinces (
   id        SERIAL        PRIMARY KEY,
-  name      VARCHAR(100)  NOT NULL UNIQUE
+  name      VARCHAR(100)  NOT NULL UNIQUE,
+  name_en   VARCHAR(100)  NOT NULL DEFAULT ''
 );
 
 CREATE TABLE weather_logs (
@@ -31,6 +32,7 @@ CREATE TABLE weather_logs (
   humidity     DECIMAL(5, 2)   NOT NULL,
   wind_speed   DECIMAL(6, 2)   NOT NULL,
   condition    VARCHAR(100)     NOT NULL,
+  condition_en VARCHAR(100)     NOT NULL DEFAULT '',
   icon         VARCHAR(10)      NULL,
   updated_at   TIMESTAMPTZ      NOT NULL DEFAULT NOW()
 );
@@ -94,18 +96,18 @@ VALUES
         NOW()
     );
 
-INSERT INTO provinces (name) VALUES 
-  ('กรุงเทพมหานคร'),
-  ('เชียงใหม่'),
-  ('ภูเก็ต'),
-  ('ขอนแก่น'),
-  ('ชลบุรี');
+INSERT INTO provinces (name, name_en) VALUES 
+  ('กรุงเทพมหานคร', 'Bangkok'),
+  ('เชียงใหม่', 'Chiang Mai'),
+  ('ภูเก็ต', 'Phuket'),
+  ('ขอนแก่น', 'Khon Kaen'),
+  ('ชลบุรี', 'Chonburi');
 
 INSERT INTO weather_logs
-  (province_id, temperature, humidity, wind_speed, condition, icon, updated_at)
+  (province_id, temperature, humidity, wind_speed, condition, condition_en, icon, updated_at)
 VALUES
-  (1, 34, 64, 25, 'แดดจัด',       '☀️',  '2026-04-17 10:00:00.000'),
-  (2, 28, 72, 15, 'มีเมฆบางส่วน', '⛅',  '2026-04-17 10:00:00.000'),
-  (3, 33, 80, 30, 'ฝนตกเล็กน้อย', '🌧️', '2026-04-17 10:00:00.000'),
-  (4, 36, 55, 10, 'ร้อนจัด',      '🌡️', '2026-04-17 10:00:00.000'),
-  (5, 32, 75, 20, 'มีเมฆมาก',     '☁️',  '2026-04-17 10:00:00.000');
+  (1, 34, 64, 25, 'แดดจัด',       'Sunny',         '☀️',  '2026-04-17 10:00:00.000'),
+  (2, 28, 72, 15, 'มีเมฆบางส่วน', 'Partly Cloudy', '⛅',  '2026-04-17 10:00:00.000'),
+  (3, 33, 80, 30, 'ฝนตกเล็กน้อย', 'Light Rain',    '🌧️', '2026-04-17 10:00:00.000'),
+  (4, 36, 55, 10, 'ร้อนจัด',      'Very Hot',      '🌡️', '2026-04-17 10:00:00.000'),
+  (5, 32, 75, 20, 'มีเมฆมาก',     'Cloudy',        '☁️',  '2026-04-17 10:00:00.000');

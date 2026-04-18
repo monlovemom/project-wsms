@@ -9,16 +9,18 @@ export default function ThailandMap({ onSelectProvince, currentWeather, lang, pr
   const [selectedID, setSelectedID] = useState(null)
 
   const getProvinceData = (geo) => {
-    const geoName = geo.properties.name || geo.properties.NAME_1
-    const cleanName = geoName.replace(" Metropolis", "").replace("Phra Nakhon Si Ayutthaya", "Ayutthaya")
-    
-    if (!provinces || provinces.length === 0) return { en: cleanName, th: cleanName }
+  const geoName = geo.properties.name || geo.properties.NAME_1;
+  const cleanName = geoName.replace(" Metropolis", "").replace("Phra Nakhon Si Ayutthaya", "Ayutthaya");
+  
+  if (!provinces || provinces.length === 0) return { en: cleanName, th: cleanName };
 
-    const found = provinces.find(p => 
-      p.en.toLowerCase().replace(/\s+/g, '') === cleanName.toLowerCase().replace(/\s+/g, '')
-    )
-    return found ? found : { en: cleanName, th: cleanName }
-  }
+  const found = provinces.find(p => 
+    p.name.toLowerCase() === cleanName.toLowerCase() || 
+    (p.name_en && p.name_en.toLowerCase().replace(/\s+/g, '') === cleanName.toLowerCase().replace(/\s+/g, ''))
+  );
+
+  return found ? { en: found.name_en, th: found.name } : { en: cleanName, th: cleanName };
+}
 
   return (
     <div className="relative w-full h-full bg-[#0f172a] flex justify-center items-center rounded-2xl overflow-hidden"
@@ -33,7 +35,9 @@ export default function ThailandMap({ onSelectProvince, currentWeather, lang, pr
             {({ geographies }) =>
               geographies.map((geo) => {
                 const data = getProvinceData(geo)
-                const isSelected = selectedID === geo.rsmKey || (currentWeather && data.en === currentWeather.rawName)
+                // ตรวจสอบสถานะการเลือกโดยใช้ชื่อไทยหรืออังกฤษ
+                const isSelected = selectedID === geo.rsmKey || (currentWeather && (data.en === currentWeather.rawName || data.th === currentWeather.name))
+                
                 return (
                   <Geography
                     key={geo.rsmKey}
@@ -42,10 +46,10 @@ export default function ThailandMap({ onSelectProvince, currentWeather, lang, pr
                       isSelected ? 'fill-cyan-500' : 'fill-[#1e293b] hover:fill-blue-500'
                     }`}
                     onClick={() => {
-                       onSelectProvince(data[lang], data.en)
+                       onSelectProvince(data.th, data.en)
                        setSelectedID(geo.rsmKey)
                     }}
-                    onMouseEnter={() => setHoverInfo(data[lang])}
+                    onMouseEnter={() => setHoverInfo(lang === 'th' ? data.th : data.en)}
                     onMouseLeave={() => setHoverInfo(null)}
                   />
                 )
