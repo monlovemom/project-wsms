@@ -1,0 +1,204 @@
+/* ===============================
+   BACKGROUND (grid + glow)
+================================ */
+.pricing-page {
+  min-height: 100vh;
+  padding: 100px 20px 60px;
+  background: #020617;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+/* grid */
+.pricing-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, white 40%, transparent 80%);
+  z-index: 0;
+}
+
+/* glow */
+.pricing-page::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(56,189,248,0.25), transparent 70%);
+  filter: blur(100px);
+  z-index: 0;
+}
+
+/* ===============================
+   CONTENT
+================================ */
+.pricing-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: auto;
+  text-align: center;
+}
+
+.pricing-title {
+  font-size: 40px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 10px;
+}
+
+.pricing-sub {
+  color: #94a3b8;
+  margin-bottom: 50px;
+  font-size: 15px;
+}
+
+/* ===============================
+   GRID
+================================ */
+.pricing-grid {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ===============================
+   CARD
+================================ */
+.pricing-card {
+  width: 300px;
+  padding: 28px;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.08);
+  text-align: left;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+/* hover */
+.pricing-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 0 30px rgba(56,189,248,0.15);
+}
+
+/* selected */
+.pricing-card.active {
+  border: 1px solid #38bdf8;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.5),
+    0 0 35px rgba(56,189,248,0.5);
+  transform: translateY(-10px) scale(1.05);
+  animation: pop 0.25s ease;
+}
+
+/* pop animation */
+@keyframes pop {
+  0% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* ===============================
+   BADGE
+================================ */
+.badge {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  font-size: 12px;
+  background: #38bdf8;
+  color: hsl(0, 0%, 95%);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* ===============================
+   TEXT
+================================ */
+.plan-name {
+  color: #e2e8f0;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.price {
+  font-size: 38px;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 10px 0;
+}
+
+.desc {
+  color: #f3f5f8;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+/* ===============================
+   LIST
+================================ */
+.pricing-card ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.pricing-card li {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.pricing-card li.active-text {
+  color: #22c55e;
+}
+
+.pricing-card li.disabled {
+  color: #64748b;
+  text-decoration: line-through;
+}
+
+/* ===============================
+   BUTTON
+================================ */
+.pricing-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  background: linear-gradient(135deg, #38bdf8, #3b82f6);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pricing-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(56,189,248,0.6);
+}
+
+/* ===============================
+   NOTE
+================================ */
+.note {
+  margin-top: 40px;
+  color: #94a3b8;
+  font-size: 14px;
+}
