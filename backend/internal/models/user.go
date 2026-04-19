@@ -44,6 +44,10 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type ChangePlanRequest struct {
+	PlanID int `json:"plan_id" binding:"required"`
+}
+
 type UserResponse struct {
 	ID        int       `json:"id"`
 	Username  string    `json:"username"`

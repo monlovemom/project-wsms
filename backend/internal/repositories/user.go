@@ -1,12 +1,8 @@
 package repository
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"fmt"
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 
 	"backend/internal/models"
 )
@@ -19,12 +15,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{DB: db}
 }
 
-func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserResponse, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *UserRepository) CreateUser(username, email, hashedPassword string) (*models.UserResponse, error) {
 	query := `
 		INSERT INTO users (username, email, password, is_active, created_at)
 		VALUES ($1, $2, $3, $4, $5)
@@ -32,10 +23,10 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 	`
 
 	var user models.UserResponse
-	err = r.DB.QueryRow(query,
-		req.Username,
-		req.Email,
-		string(hashed),
+	err := r.DB.QueryRow(query,
+		username,
+		email,
+		hashedPassword,
 		true,
 		time.Now(),
 	).Scan(
@@ -54,18 +45,7 @@ func (r *UserRepository) CreateUser(req models.CreateUserRequest) (*models.UserR
 	return &user, nil
 }
 
-func generateAPIKey() string {
-	b := make([]byte, 32)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)
-}
-
-func (r *UserRepository) CreateAPIKey(userID int, name string) (*models.APIKey, error) {
-	key := generateAPIKey()
-	if name == "" {
-		name = "default"
-	}
-
+func (r *UserRepository) CreateAPIKey(userID int, key string, name string) (*models.APIKey, error) {
 	query := `
 		INSERT INTO api_keys (user_id, key, name, is_active, created_at)
 		VALUES ($1, $2, $3, true, NOW())
@@ -143,6 +123,25 @@ func (r *UserRepository) DeleteAPIKey(userID int, keyID int) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+func (r *UserRepository) UpdateUserPlan(userID int, planID int) error {
+	query := `UPDATE users SET plan_id = $1 WHERE id = $2`
+	res, err := r.DB.Exec(query, planID, userID)
+	if err != nil {
+		return err
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+func (r *UserRepository) GetPlanByID(planID int) (bool, error) {
+	var exists bool
+	err := r.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM plan WHERE id = $1 AND is_active = true)`, planID).Scan(&exists)
+	return exists, err
 }
 
 func (r *UserRepository) GetUserByUsername(username string) (*models.User, error) {

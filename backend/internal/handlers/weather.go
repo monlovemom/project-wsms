@@ -8,15 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"backend/internal/models"
-	repository "backend/internal/repositories"
+	"backend/internal/services"
 )
 
 type WeatherHandler struct {
-	repo *repository.WeatherRepository
+	svc *services.WeatherService
 }
 
-func NewWeatherHandler(repo *repository.WeatherRepository) *WeatherHandler {
-	return &WeatherHandler{repo: repo}
+func NewWeatherHandler(svc *services.WeatherService) *WeatherHandler {
+	return &WeatherHandler{svc: svc}
 }
 
 func (h *WeatherHandler) GetWeather(c *gin.Context) {
@@ -27,7 +27,7 @@ func (h *WeatherHandler) GetWeather(c *gin.Context) {
 	}
 
 	if province == "" {
-		items, err := h.repo.GetAll(lang)
+		items, err := h.svc.GetAll(lang)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "error": "could not get weather data"})
 			return
@@ -41,7 +41,7 @@ func (h *WeatherHandler) GetWeather(c *gin.Context) {
 		return
 	}
 
-	weather, err := h.repo.GetLatestByProvince(province, lang)
+	weather, err := h.svc.GetLatestByProvince(province, lang)
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"status": "error", "error": "weather data not found for province: " + province})
 		return

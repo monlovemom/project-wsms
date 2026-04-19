@@ -4,6 +4,7 @@ import (
 	"backend/internal/handlers"
 	"backend/internal/middleware"
 	repository "backend/internal/repositories"
+	"backend/internal/services"
 	"database/sql"
 	"net/http"
 	"time"
@@ -16,9 +17,11 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	r := gin.Default()
 
 	userRepo := repository.NewUserRepository(db)
-	userHandler := handlers.NewUserHandler(userRepo)
+	userService := services.NewUserService(userRepo)
+	userHandler := handlers.NewUserHandler(userService)
 	weatherRepo := repository.NewWeatherRepository(db)
-	weatherHandler := handlers.NewWeatherHandler(weatherRepo)
+	weatherService := services.NewWeatherService(weatherRepo)
+	weatherHandler := handlers.NewWeatherHandler(weatherService)
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
@@ -77,6 +80,8 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		api.POST("/api-key", userHandler.CreateAPIKey)
 		// DELETE /api/api-key/id
 		api.DELETE("/api-key/:id", userHandler.DeleteAPIKey)
+		// PUT /api/plan (plan id 1 = free, 2 = pro, 3 = enterprise)
+		api.PUT("/plan", userHandler.ChangePlan)
 	}
 
 	// admin
