@@ -51,7 +51,7 @@ export default function PricingPage() {
                 "SLA 99.99%",
             ],
             disabled: [],
-            button: "อัปเกรด",
+            button: "สมัครเลย",
         },
     ];
 
