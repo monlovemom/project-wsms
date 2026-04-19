@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import ThailandMap from '../components/ThailandMap'
 import Navbar from '../components/Navbar'
 import LoginNavbar from '../components/LoginNavbar'
@@ -38,7 +37,7 @@ export default function WeatherPage() {
       }
     }
     fetchProvinces()
-  }, [])
+  }, [isLoaded])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -74,25 +73,42 @@ export default function WeatherPage() {
   const runDemoTest = async () => {
     if (!weatherData) return
     setIsProcessing(true)
-    const provinceToFetch = lang === "th" ? weatherData.nameTH : weatherData.nameEN
-    const encodedProvince = encodeURIComponent(provinceToFetch)
 
     try {
-      const response = await fetch(`/api/public/weather?province=${encodedProvince}&lang=${lang}`)
-      const result = await response.json()
-      if (response.ok && result.status === "ok") {
-        setWeatherData({
-          ...weatherData,
-          temp: result.data.temperature,
-          condition: result.data.condition,
-          icon: result.data.icon || "🌡️",
-          isPending: false,
-          rawData: result
-        })
-        setHasTested(true)
-      } else {
-        alert("❌ ไม่พบข้อมูล")
+      const attempts = []
+      const primaryProvince = lang === "th" ? weatherData.nameTH : weatherData.nameEN
+      const secondaryProvince = lang === "th" ? weatherData.nameEN : weatherData.nameTH
+
+      if (primaryProvince) attempts.push({ province: primaryProvince, lang })
+      if (secondaryProvince) {
+        attempts.push({ province: secondaryProvince, lang: lang === "th" ? "en" : "th" })
       }
+
+      let success = null
+      for (const attempt of attempts) {
+        const encodedProvince = encodeURIComponent(attempt.province)
+        const response = await fetch(`/api/public/weather?province=${encodedProvince}&lang=${attempt.lang}`)
+        const result = await response.json()
+        if (response.ok && result.status === "ok") {
+          success = result
+          break
+        }
+      }
+
+      if (!success) {
+        alert("❌ ไม่พบข้อมูล")
+        return
+      }
+
+      setWeatherData({
+        ...weatherData,
+        temp: success.data.temperature,
+        condition: success.data.condition,
+        icon: success.data.icon || "🌡️",
+        isPending: false,
+        rawData: success
+      })
+      setHasTested(true)
     } catch (error) {
       alert("⚠️ เชื่อมต่อไม่ได้")
     } finally {
