@@ -5,6 +5,7 @@ import ApiKeyPage from './pages/ApiKeyPage'
 import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
 import ProfilePage from './pages/ProfilePage'
+import PricingPage from './pages/PricingPage'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/apikey" element={<ApiKeyPage />} />
         <Route path="/api-demo" element={<WeatherPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

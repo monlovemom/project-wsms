@@ -1,10 +1,17 @@
 import Navbar from '../components/Navbar'
-import { useState } from "react";
+import LoginNavbar from '../components/LoginNavbar'
+import { useState, useEffect } from "react";
 import "../Pricing.css";
 
 export default function PricingPage() {
 
     const [selected, setSelected] = useState("Pro");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token')
+        setIsLoggedIn(!!token)
+    }, [])
 
     const plans = [
         {
@@ -50,7 +57,7 @@ export default function PricingPage() {
 
     return (
         <div Navbar={Navbar} className="min-h-screen bg-[#020617] text-white font-sans selection:bg-cyan-500/30">
-            <Navbar />
+            {isLoggedIn ? <LoginNavbar /> : <Navbar />}
             <div className="pricing-page">
 
                 <div className="pricing-container">
