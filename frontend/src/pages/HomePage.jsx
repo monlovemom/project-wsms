@@ -1,10 +1,23 @@
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
+import LoginNavbar from '../components/LoginNavbar'
 import { Link } from 'react-router-dom'
 
 export default function HomePage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    setIsLoggedIn(!!token)
+    setIsLoaded(true)
+  }, [])
+
+  if (!isLoaded) return null
+
   return (
     <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-cyan-500/30">
-      <Navbar />
+      {isLoggedIn ? <LoginNavbar /> : <Navbar />}
       <main className="max-w-7xl mx-auto px-6 pt-24 pb-32">
         <div className="text-center space-y-8">
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[1.1]">

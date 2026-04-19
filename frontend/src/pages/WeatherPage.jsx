@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ThailandMap from '../components/ThailandMap'
 import Navbar from '../components/Navbar'
+import LoginNavbar from '../components/LoginNavbar'
 
 export default function WeatherPage() {
   const [lang, setLang] = useState("th")
@@ -13,8 +14,18 @@ export default function WeatherPage() {
   const [currentTime, setCurrentTime] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [hasTested, setHasTested] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
+    const token = localStorage.getItem('token')
+    setIsLoggedIn(!!token)
+    setIsLoaded(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isLoaded) return
+
     const fetchProvinces = async () => {
       try {
         const response = await fetch('/api/provinces')
@@ -104,9 +115,11 @@ export default function WeatherPage() {
     unit: unit
   } : null
 
+  if (!isLoaded) return null
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans pb-20">
-      <Navbar />
+      {isLoggedIn ? <LoginNavbar /> : <Navbar />}
       <div className="max-w-7xl mx-auto p-8 flex flex-col lg:flex-row gap-6">
         <div className="w-full lg:w-2/3 space-y-4">
           <div className="bg-[#0f172a] p-4 rounded-2xl border border-slate-800 flex gap-4 items-center relative shadow-2xl">

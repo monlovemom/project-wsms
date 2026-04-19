@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import LoginNavbar from '../components/LoginNavbar'
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -11,7 +12,15 @@ export default function RegisterPage() {
     })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [isLoaded, setIsLoaded] = useState(false)
     const navigate = useNavigate()
+
+    useEffect(() => {
+      const token = localStorage.getItem('token')
+      setIsLoggedIn(!!token)
+      setIsLoaded(true)
+    }, [])
 
     const handleChange = (e) => {
         setFormData({
@@ -108,9 +117,11 @@ export default function RegisterPage() {
         }
     }
 
+    if (!isLoaded) return null
+
     return (
         <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-cyan-500/30">
-            <Navbar />
+            {isLoggedIn ? <LoginNavbar /> : <Navbar />}
             <main className="flex flex-col items-center justify-center px-6 py-12">
                 <div className="w-full max-w-md bg-slate-900/50 border border-slate-800 p-10 rounded-[2.5rem] shadow-2xl backdrop-blur-sm">
                     <div className="text-center mb-8">

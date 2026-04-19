@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
+import LoginNavbar from '../components/LoginNavbar'
 
 export default function ApiKeyPage() {
   const [keys, setKeys] = useState([
@@ -7,6 +8,14 @@ export default function ApiKeyPage() {
     { id: 2, name: 'Development', token: 'wth_live_a7b2c9d1e4f5g6h7i8j9', created: '2026-04-15' }
   ])
   const [copiedId, setCopiedId] = useState(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    setIsLoggedIn(!!token)
+    setIsLoaded(true)
+  }, [])
 
   const currentPlan = {
     name: "Starter Plan",
@@ -49,9 +58,11 @@ export default function ApiKeyPage() {
     }
   }
 
+  if (!isLoaded) return null
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans pb-20">
-      <Navbar />
+      {isLoggedIn ? <LoginNavbar /> : <Navbar />}
       <main className="max-w-7xl mx-auto p-8">
         <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
           <div>
