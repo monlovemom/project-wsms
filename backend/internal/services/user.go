@@ -138,3 +138,11 @@ func generateAPIKeyString() string {
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)
 }
+
+func (s *UserService) GetDashboardStats(userID int) (*models.DashboardStats, error) {
+	return s.repo.GetDashboardStats(userID)
+}
+
+func (s *UserService) GetAllPlans() ([]models.Plan, error) {
+	return s.repo.GetAllPlans()
+}

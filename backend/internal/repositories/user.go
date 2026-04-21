@@ -226,3 +226,62 @@ func (r *UserRepository) GetAllUsers() ([]models.UserResponse, error) {
 
 	return users, nil
 }
+
+func (r *UserRepository) GetDashboardStats(userID int) (*models.DashboardStats, error) {
+	query := `
+		SELECT 
+			p.plan_name,
+			p.req_per_day,
+			p.req_per_month,
+			(SELECT COUNT(*) FROM api_usage WHERE user_id = $1 AND requested_at::date = CURRENT_DATE) AS used_today,
+			(SELECT COUNT(*) FROM api_usage WHERE user_id = $1 AND DATE_TRUNC('month', requested_at) = DATE_TRUNC('month', NOW())) AS used_this_month
+		FROM users u
+		JOIN plan p ON p.id = u.plan_id
+		WHERE u.id = $1
+	`
+
+	var stats models.DashboardStats
+	err := r.DB.QueryRow(query, userID).Scan(
+		&stats.PlanName,
+		&stats.ReqPerDay,
+		&stats.ReqPerMonth,
+		&stats.UsedToday,
+		&stats.UsedThisMonth,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &stats, nil
+}
+
+func (r *UserRepository) GetAllPlans() ([]models.Plan, error) {
+	query := `
+		SELECT id, plan_name, req_per_minute, req_per_day, req_per_month, 
+		       price, has_usage_dashboard, has_data_export, sla_guarantee, support_level, is_active
+		FROM plan
+		WHERE is_active = true
+		ORDER BY price ASC
+	`
+
+	rows, err := r.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var plans []models.Plan
+	for rows.Next() {
+		var p models.Plan
+		err := rows.Scan(
+			&p.ID, &p.PlanName, &p.ReqPerMinute, &p.ReqPerDay, &p.ReqPerMonth,
+			&p.Price, &p.HasUsageDashboard, &p.HasDataExport, &p.SLAGuarantee, &p.SupportLevel, &p.IsActive,
+		)
+		if err != nil {
+			return nil, err
+		}
+		plans = append(plans, p)
+	}
+
+	return plans, nil
+}

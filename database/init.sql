@@ -267,3 +267,23 @@ VALUES
   (75, 35, 76, 19, 'มีเมฆมาก', 'Cloudy', '☁️', '2026-04-19 09:00:00.000'),
   (76, 26, 83, 24, 'แดดจัด', 'Sunny', '☀️', '2026-04-19 09:00:00.000'),
   (77, 29, 90, 29, 'มีเมฆบางส่วน', 'Partly Cloudy', '⛅', '2026-04-19 09:00:00.000');
+
+CREATE TABLE IF NOT EXISTS public.plan (
+  id SERIAL PRIMARY KEY,
+  plan_name VARCHAR(20) NOT NULL UNIQUE,
+  req_per_minute INT NOT NULL DEFAULT 10,
+  req_per_day INT NOT NULL DEFAULT 100,
+  req_per_month INT NOT NULL DEFAULT 1000,
+  price INT DEFAULT 0,
+  has_usage_dashboard BOOLEAN DEFAULT true,
+  has_data_export BOOLEAN DEFAULT false,
+  sla_guarantee VARCHAR(50) DEFAULT 'None',
+  support_level VARCHAR(50) DEFAULT 'Community',
+  is_active BOOLEAN DEFAULT true  
+);
+
+INSERT INTO public.plan (plan_name, req_per_minute, req_per_day, req_per_month, price, has_data_export, sla_guarantee, support_level) 
+VALUES 
+('free', 5, 10, 1000, 0, false, 'None', 'Community'),
+('pro', 60, 1000, 30000, 299, true, '99.5%', 'Email (24hr)'),
+('enterprise', 120, 5000, 100000, 999, true, '99.9%', 'Priority 24/7');

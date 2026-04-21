@@ -16,7 +16,7 @@ export default defineConfig({
     proxy: {
       '/register': { target: proxyTarget, changeOrigin: true },
       '/login': { target: proxyTarget, changeOrigin: true },
-      '/api': { target: proxyTarget, changeOrigin: true },
+      '/api/': { target: proxyTarget, changeOrigin: true },
       '/health': { target: proxyTarget, changeOrigin: true },
     },
   },
