@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"backend/internal/services"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -65,4 +67,36 @@ func (h *QuotaHandler) GetMyUsageSummary(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, data)
+}
+
+func (h *QuotaHandler) GetMyRecentUsage(c *gin.Context) {
+	userID, ok := getUserIDFromClaims(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	limit := 10
+	if rawLimit := c.Query("limit"); rawLimit != "" {
+		parsed, err := strconv.Atoi(rawLimit)
+		if err != nil || parsed <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be a positive integer"})
+			return
+		}
+		if parsed > 50 {
+			parsed = 50
+		}
+		limit = parsed
+	}
+
+	items, err := h.QuotaService.GetMyRecentUsage(c.Request.Context(), userID, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"items": items,
+		"total": len(items),
+	})
 }

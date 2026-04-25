@@ -26,3 +26,7 @@ func (s *QuotaService) GetMyUsage(ctx context.Context, userID int) (*models.Usag
 func (s *QuotaService) GetMyUsageSummary(ctx context.Context, userID int) (*models.UsageQuota, error) {
 	return s.QuotaRepo.GetQuotaByUserToday(ctx, userID)
 }
+
+func (s *QuotaService) GetMyRecentUsage(ctx context.Context, userID int, limit int) ([]models.UsageRequest, error) {
+	return s.QuotaRepo.GetRecentUsageByUser(ctx, userID, limit)
+}

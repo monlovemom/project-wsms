@@ -24,16 +24,37 @@ export default function LoginPage() {
         setLoading(true)
 
         try {
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password,
-                }),
-            })
+            const loginEndpoints = [
+                'http://localhost:8080/login',
+                'http://127.0.0.1:8080/login',
+                'http://localhost/login',
+                'http://127.0.0.1/login',
+            ]
+
+            let response = null
+            let lastNetworkError = null
+
+            for (const endpoint of loginEndpoints) {
+                try {
+                    response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password,
+                        }),
+                    })
+                    break
+                } catch (networkErr) {
+                    lastNetworkError = networkErr
+                }
+            }
+
+            if (!response) {
+                throw new Error(lastNetworkError?.message || 'Failed to connect to backend')
+            }
 
             // ตรวจสอบ response status ก่อน
             if (!response.ok) {

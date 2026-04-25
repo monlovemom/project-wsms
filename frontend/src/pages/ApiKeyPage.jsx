@@ -2,39 +2,134 @@ import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import LoginNavbar from '../components/LoginNavbar'
 
+const API_BASE_URL = 'http://localhost:8080/api'
+
+const normalizeApiKeys = (payload) => {
+  if (Array.isArray(payload)) return payload
+  if (payload && Array.isArray(payload.api_keys)) return payload.api_keys
+  return []
+}
+
+const normalizeRecentRequests = (payload) => {
+  if (Array.isArray(payload)) return payload
+  if (payload && Array.isArray(payload.items)) return payload.items
+  return []
+}
+
+const formatDate = (value) => {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  return date.toLocaleDateString('th-TH')
+}
+
+const formatTimeAgo = (value) => {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const diffMS = Date.now() - date.getTime()
+  if (diffMS < 0) return '-'
+
+  const minutes = Math.floor(diffMS / 60000)
+  if (minutes < 1) return 'เมื่อสักครู่'
+  if (minutes < 60) return `${minutes} นาทีที่แล้ว`
+
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`
+
+  const days = Math.floor(hours / 24)
+  return `${days} วันที่แล้ว`
+}
+
 export default function ApiKeyPage() {
-  const [keys, setKeys] = useState([
-    { id: 1, name: 'Main Project', token: 'wth_live_5f3k29x8m10pqr7z2v5n', created: '2026-04-10' },
-    { id: 2, name: 'Development', token: 'wth_live_a7b2c9d1e4f5g6h7i8j9', created: '2026-04-15' }
-  ])
+  const [keys, setKeys] = useState([])
   const [copiedId, setCopiedId] = useState(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  
+  // Dashboard data from API
+  const [quotaData, setQuotaData] = useState(null)
+  const [userPlan, setUserPlan] = useState(null)
+  const [recentRequests, setRecentRequests] = useState([])
+
+  // Fetch data from backend
+  const fetchData = async (token) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Fetch API Keys
+      const keysRes = await fetch(`${API_BASE_URL}/api-key`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (keysRes.ok) {
+        const keysData = await keysRes.json()
+        setKeys(normalizeApiKeys(keysData))
+      }
+
+      // Fetch Usage Quota
+      const quotaRes = await fetch(`${API_BASE_URL}/usage-quota`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (quotaRes.ok) {
+        const quota = await quotaRes.json()
+        setQuotaData(quota)
+      } else {
+        setQuotaData(null)
+      }
+
+      // Fetch User Info (for plan details)
+      const userRes = await fetch(`${API_BASE_URL}/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (userRes.ok) {
+        const user = await userRes.json()
+        setUserPlan(user)
+      }
+
+      // Fetch recent API usage logs
+      const recentRes = await fetch(`${API_BASE_URL}/usage-recent?limit=10`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (recentRes.ok) {
+        const recentData = await recentRes.json()
+        setRecentRequests(normalizeRecentRequests(recentData))
+      } else {
+        setRecentRequests([])
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err)
+      setError('ไม่สามารถโหลดข้อมูลได้')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     setIsLoggedIn(!!token)
     setIsLoaded(true)
+    
+    if (token) {
+      fetchData(token)
+    }
   }, [])
 
+  // Compute current plan data
   const currentPlan = {
-    name: "Starter Plan",
-    limit: 1000,
-    used: 750,
-    today: 124,
-    rateLimit: "10 ครั้ง / นาที",
-    canExport: false
+    name: userPlan?.plan_name || "Starter Plan",
+    limit: userPlan?.req_per_month || 1000,
+    used: quotaData?.used_this_month || 0,
+    today: quotaData?.used_today || 0,
+    rateLimit: userPlan?.req_per_minute ? `${userPlan.req_per_minute} ครั้ง / นาที` : "10 ครั้ง / นาที",
+    canExport: userPlan?.plan_id >= 2 // Plan ID 2+ = Silver/Premium
   }
 
+  // Mock history data (in production, this would come from API)
   const history = [40, 65, 30, 85, 45, 90, 60]
-
-  const recentRequests = [
-    { id: 1, method: 'GET', endpoint: '/v2/current?province=Bangkok', status: 200, time: '2 นาทีที่แล้ว' },
-    { id: 2, method: 'GET', endpoint: '/v2/current?province=Chiang%20Mai', status: 200, time: '15 นาทีที่แล้ว' },
-    { id: 3, method: 'GET', endpoint: '/v2/current?province=Phuket', status: 429, time: '1 ชั่วโมงที่แล้ว' },
-    { id: 4, method: 'GET', endpoint: '/v2/current?province=Khon%20Kaen', status: 200, time: '3 ชั่วโมงที่แล้ว' },
-    { id: 5, method: 'GET', endpoint: '/v2/current?province=Chonburi', status: 200, time: '5 ชั่วโมงที่แล้ว' }
-  ]
 
   const handleCopy = (token, id) => {
     navigator.clipboard.writeText(token)
@@ -42,19 +137,69 @@ export default function ApiKeyPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const generateKey = () => {
-    if (keys.length >= 3) {
-      alert("แพ็กเกจ Starter จำกัดสูงสุด 3 กุญแจ")
+  const generateKey = async () => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setError('กรุณาเข้าสู่ระบบ')
       return
     }
-    const newId = Date.now()
-    const randomToken = "wth_live_" + Math.random().toString(36).substring(2, 15)
-    setKeys([...keys, { id: newId, name: `กุญแจที่ ${keys.length + 1}`, token: randomToken, created: new Date().toISOString().split('T')[0] }])
+
+    if (keys.length >= 5) {
+      setError('สร้างได้สูงสุด 5 กุญแจ')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-key`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: `กุญแจที่ ${keys.length + 1}`
+        })
+      })
+
+      if (response.ok) {
+        const newKey = await response.json()
+        setKeys(prev => [...prev, newKey])
+        setError(null)
+      } else {
+        setError('ไม่สามารถสร้างกุญแจได้')
+      }
+    } catch (err) {
+      console.error('Error creating key:', err)
+      setError('เกิดข้อผิดพลาด')
+    }
   }
 
-  const removeKey = (id) => {
-    if (confirm("คุณแน่ใจหรือไม่ที่จะลบกุญแจนี้? โปรแกรมที่ใช้กุญแจนี้จะหยุดทำงานทันที")) {
-      setKeys(keys.filter(k => k.id !== id))
+  const removeKey = async (id) => {
+    if (!confirm("คุณแน่ใจหรือไม่ที่จะลบกุญแจนี้? โปรแกรมที่ใช้กุญแจนี้จะหยุดทำงานทันที")) {
+      return
+    }
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setError('กรุณาเข้าสู่ระบบ')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-key/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        setKeys(prev => prev.filter(k => k.id !== id))
+        setError(null)
+      } else {
+        setError('ไม่สามารถลบกุญแจได้')
+      }
+    } catch (err) {
+      console.error('Error deleting key:', err)
+      setError('เกิดข้อผิดพลาด')
     }
   }
 
@@ -64,6 +209,22 @@ export default function ApiKeyPage() {
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans pb-20">
       {isLoggedIn ? <LoginNavbar /> : <Navbar />}
       <main className="max-w-7xl mx-auto p-8">
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-4 rounded-2xl">
+            {error}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <p className="text-slate-400">กำลังโหลดข้อมูล...</p>
+          </div>
+        )}
+
+        {!loading && (
+          <>
         <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
           <div>
             <h1 className="text-4xl font-black text-white mb-2">จัดการ API Key</h1>
@@ -96,8 +257,8 @@ export default function ApiKeyPage() {
                 <div key={item.id} className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-6 shadow-xl group transition-all hover:border-slate-700">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-white font-bold text-lg">{item.name}</h3>
-                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">สร้างเมื่อ: {item.created}</p>
+                      <h3 className="text-white font-bold text-lg">{item.name || `กุญแจ #${item.id}`}</h3>
+                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">สร้างเมื่อ: {formatDate(item.created_at || item.created)}</p>
                     </div>
                     <button 
                       onClick={() => removeKey(item.id)}
@@ -108,10 +269,10 @@ export default function ApiKeyPage() {
                   </div>
                   <div className="flex gap-3 items-center">
                     <div className="flex-grow bg-black/40 border border-slate-700 p-4 rounded-2xl font-mono text-xs text-blue-400 break-all select-all">
-                      {item.token}
+                      {item.key || item.token}
                     </div>
                     <button 
-                      onClick={() => handleCopy(item.token, item.id)}
+                      onClick={() => handleCopy(item.key || item.token || '', item.id)}
                       className={`px-6 py-4 rounded-2xl font-black text-xs transition-all whitespace-nowrap ${copiedId === item.id ? 'bg-green-500/20 text-green-400' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
                     >
                       {copiedId === item.id ? "ก๊อปปี้แล้ว" : "คัดลอก"}
@@ -142,16 +303,21 @@ export default function ApiKeyPage() {
                     </tr>
                   </thead>
                   <tbody className="text-sm font-medium">
+                    {recentRequests.length === 0 && (
+                      <tr>
+                        <td className="py-6 px-2 text-slate-500" colSpan={4}>ยังไม่มีประวัติการใช้งาน</td>
+                      </tr>
+                    )}
                     {recentRequests.map((req) => (
                       <tr key={req.id} className="border-b border-slate-800/50 group hover:bg-white/5">
-                        <td className="py-4 px-2 font-black text-blue-400">{req.method}</td>
-                        <td className="py-4 font-mono text-xs text-slate-300">{req.endpoint}</td>
+                        <td className="py-4 px-2 font-black text-blue-400">{req.method || '-'}</td>
+                        <td className="py-4 font-mono text-xs text-slate-300">{req.endpoint || '-'}</td>
                         <td className="py-4">
-                          <span className={`px-2 py-1 rounded-md text-[10px] font-black ${req.status === 200 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                            {req.status === 429 ? '429 (LIMIT)' : req.status}
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-black ${req.status_code >= 200 && req.status_code < 300 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                            {req.status_code === 429 ? '429 (LIMIT)' : (req.status_code || '-')}
                           </span>
                         </td>
-                        <td className="py-4 text-right text-slate-500 text-xs">{req.time}</td>
+                        <td className="py-4 text-right text-slate-500 text-xs">{formatTimeAgo(req.requested_at)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -182,7 +348,7 @@ export default function ApiKeyPage() {
                 </div>
                 
                 <div className="flex justify-between text-[10px] text-blue-200 font-bold mt-4 pt-4 border-t border-blue-400/20">
-                  <span className="flex items-center gap-1">🔑 กุญแจ: {keys.length} / 3</span>
+                  <span className="flex items-center gap-1">🔑 กุญแจ: {keys.length} / 5</span>
                   <span className="flex items-center gap-1">⚡ ความเร็ว: {currentPlan.rateLimit}</span>
                 </div>
                 <div className="text-right text-[10px] text-blue-200/70 font-bold">
@@ -208,6 +374,8 @@ export default function ApiKeyPage() {
             </div>
           </aside>
         </div>
+          </>
+        )}
       </main>
     </div>
   )

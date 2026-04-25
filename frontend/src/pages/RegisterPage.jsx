@@ -51,8 +51,13 @@ export default function RegisterPage() {
         setLoading(true)
 
         try {
-            // Try proxy path first, then explicit localhost endpoints as fallback.
-            const registerEndpoints = ['/register', 'http://localhost/register', 'http://127.0.0.1/register']
+            // Try backend direct endpoints with local fallbacks.
+            const registerEndpoints = [
+                'http://localhost:8080/register',
+                'http://127.0.0.1:8080/register',
+                'http://localhost/register',
+                'http://127.0.0.1/register',
+            ]
             const payload = {
                 username: formData.username.trim(),
                 email: formData.email.trim(),

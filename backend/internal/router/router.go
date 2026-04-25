@@ -83,6 +83,7 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		// ===== ADD: usage quota routes =====
 		api.GET("/usage-quota", quotaHandler.GetMyUsage)
 		api.GET("/usage-quota/summary", quotaHandler.GetMyUsageSummary)
+		api.GET("/usage-recent", quotaHandler.GetMyRecentUsage)
 		// ===== END ADD =====
 
 		// GET /api/api-key

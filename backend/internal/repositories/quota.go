@@ -135,3 +135,54 @@ func (r *QuotaRepository) GetQuotaByUserToday(ctx context.Context, userID int) (
 
 	return &q, nil
 }
+
+func (r *QuotaRepository) GetRecentUsageByUser(ctx context.Context, userID int, limit int) ([]models.UsageRequest, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	query := `
+		SELECT
+			au.id,
+			COALESCE(ak.name, '') AS api_key_name,
+			COALESCE(au.endpoint, '') AS endpoint,
+			COALESCE(au.method, '') AS method,
+			COALESCE(au.status_code, 0) AS status_code,
+			COALESCE(au.response_ms, 0) AS response_ms,
+			au.requested_at
+		FROM api_usage au
+		LEFT JOIN api_keys ak ON ak.id = au.api_key_id
+		WHERE au.user_id = $1
+		ORDER BY au.requested_at DESC
+		LIMIT $2
+	`
+
+	rows, err := r.DB.QueryContext(ctx, query, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]models.UsageRequest, 0)
+	for rows.Next() {
+		var item models.UsageRequest
+		if err := rows.Scan(
+			&item.ID,
+			&item.APIKeyName,
+			&item.Endpoint,
+			&item.Method,
+			&item.StatusCode,
+			&item.ResponseMS,
+			&item.RequestedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}

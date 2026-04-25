@@ -14,9 +14,8 @@ export default defineConfig({
     host: 'localhost',
     open: true,
     proxy: {
-      '/register': { target: proxyTarget, changeOrigin: true },
-      '/login': { target: proxyTarget, changeOrigin: true },
-      '/api': { target: proxyTarget, changeOrigin: true },
+      // Use trailing slash to avoid matching frontend routes like /apikey or /api-demo.
+      '/api/': { target: proxyTarget, changeOrigin: true },
       '/health': { target: proxyTarget, changeOrigin: true },
     },
   },
