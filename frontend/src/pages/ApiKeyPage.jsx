@@ -128,8 +128,14 @@ export default function ApiKeyPage() {
     canExport: userPlan?.plan_id >= 2 // Plan ID 2+ = Silver/Premium
   }
 
-  // Mock history data (in production, this would come from API)
-  const history = [40, 65, 30, 85, 45, 90, 60]
+  const usagePercent = currentPlan.limit > 0
+    ? Math.min(100, Math.round((currentPlan.used / currentPlan.limit) * 100))
+    : 0
+
+  const donutRadius = 58
+  const donutStroke = 12
+  const donutCircumference = 2 * Math.PI * donutRadius
+  const donutOffset = donutCircumference * (1 - usagePercent / 100)
 
   const handleCopy = (token, id) => {
     navigator.clipboard.writeText(token)
@@ -287,7 +293,7 @@ export default function ApiKeyPage() {
                 <h2 className="text-xl font-bold text-white">ประวัติการใช้งานล่าสุด</h2>
                 <button 
                   className={`text-xs font-bold px-4 py-2 rounded-lg border ${currentPlan.canExport ? 'border-blue-500/30 text-blue-400 hover:bg-blue-500/10' : 'border-slate-700 text-slate-600 cursor-not-allowed'}`}
-                  title={!currentPlan.canExport ? "สงวนสิทธิ์สำหรับแพ็กเกจ Silver ขึ้นไป" : ""}
+                  title={!currentPlan.canExport ? "สงวนสิทธิ์สำหรับแพ็กเกจ Pro ขึ้นไป" : ""}
                 >
                   📥 Export CSV
                 </button>
@@ -359,17 +365,39 @@ export default function ApiKeyPage() {
             </div>
 
             <div className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-8 shadow-xl">
-              <h2 className="text-xl font-bold text-white mb-6">กราฟ 7 วันย้อนหลัง</h2>
-              <div className="h-40 flex items-end gap-2 px-2">
-                {history.map((height, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                    <div 
-                      className="w-full bg-blue-600/20 group-hover:bg-blue-600/40 border-t-2 border-blue-500 transition-all rounded-t-lg" 
-                      style={{ height: `${height}%` }}
-                    ></div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">วันที่ {i+1}</span>
+              <h2 className="text-xl font-bold text-white mb-6">การใช้งานโควตาเดือนนี้</h2>
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative w-40 h-40">
+                  <svg viewBox="0 0 160 160" className="w-full h-full -rotate-90">
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r={donutRadius}
+                      fill="none"
+                      stroke="rgba(59, 130, 246, 0.2)"
+                      strokeWidth={donutStroke}
+                    />
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r={donutRadius}
+                      fill="none"
+                      stroke="#22d3ee"
+                      strokeWidth={donutStroke}
+                      strokeLinecap="round"
+                      strokeDasharray={donutCircumference}
+                      strokeDashoffset={donutOffset}
+                      className="transition-all duration-700"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-4xl font-black text-white leading-none">{usagePercent}%</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Used</span>
                   </div>
-                ))}
+                </div>
+                <p className="text-sm text-slate-400 font-semibold">
+                  ใช้ไปแล้ว {currentPlan.used} จาก {currentPlan.limit} ครั้ง
+                </p>
               </div>
             </div>
           </aside>
