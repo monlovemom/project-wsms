@@ -23,6 +23,13 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	weatherService := services.NewWeatherService(weatherRepo)
 	weatherHandler := handlers.NewWeatherHandler(weatherService)
 
+	// ===== ADD: usage quota =====
+	quotaRepo := repository.NewQuotaRepository(db)
+	quotaService := services.NewQuotaService(quotaRepo)
+	quotaHandler := handlers.NewQuotaHandler(quotaService)
+	quotaMiddleware := middleware.QuotaMiddleware(quotaService)
+	// ===== END ADD =====
+
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:3000",
@@ -72,6 +79,12 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	{
 		// GET /me
 		api.GET("/me", userHandler.GetMe)
+
+		// ===== ADD: usage quota routes =====
+		api.GET("/usage-quota", quotaHandler.GetMyUsage)
+		api.GET("/usage-quota/summary", quotaHandler.GetMyUsageSummary)
+		// ===== END ADD =====
+
 		// GET /api/api-key
 		api.GET("/api-key", userHandler.GetAPIKey)
 		// GET /api/api-key/id
@@ -95,6 +108,11 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	// weather
 	weather := r.Group("/api")
 	weather.Use(middleware.ApiKeyAuth(db), middleware.PlanQuota(db))
+
+	// ===== ADD: quota middleware =====
+	weather.Use(quotaMiddleware)
+	// ===== END ADD =====
+
 	{
 		// GET /api/weather?lang=th or /api/weather?lang=en
 		// GET /api/weather?province=เชียงใหม่&lang=th or /api/weather?province=Chiang Mai&lang=en

@@ -8,6 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+
+	"backend/internal/services"
 )
 
 type planQuota struct {
@@ -159,4 +161,21 @@ func saveAPIUsage(db *sql.DB, userID int, apiKeyID *int, endpoint, method string
 
 	_, err := db.Exec(query, userID, apiKeyID, endpoint, method, statusCode, responseMS, ipAddress)
 	return err
+}
+func QuotaMiddleware(quotaService *services.QuotaService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		userIDValue, exists := c.Get("user_id")
+		if !exists {
+			return
+		}
+
+		userID, ok := userIDValue.(int)
+		if !ok {
+			return
+		}
+
+		_ = quotaService.LogUsage(c.Request.Context(), userID)
+	}
 }
