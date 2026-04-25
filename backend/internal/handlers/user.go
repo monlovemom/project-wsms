@@ -225,32 +225,3 @@ func extractUserID(c *gin.Context) (int, error) {
 	}
 	return int(userIDFloat), nil
 }
-
-func (h *UserHandler) GetDashboardStats(c *gin.Context) {
-	userID, err := extractUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	stats, err := h.svc.GetDashboardStats(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get dashboard stats"})
-		return
-	}
-
-	c.JSON(http.StatusOK, stats)
-}
-
-func (h *UserHandler) GetAllPlans(c *gin.Context) {
-	plans, err := h.svc.GetAllPlans()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get plans"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"plans": plans,
-		"total": len(plans),
-	})
-}

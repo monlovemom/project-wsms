@@ -61,8 +61,6 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		c.JSON(200, provinces)
 	})
 
-	r.GET("/api/plans", userHandler.GetAllPlans)
-
 	// POST /register (username + email + password)
 	r.POST("/register", userHandler.Register)
 	// POST /login (username + password)
@@ -84,8 +82,6 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		api.DELETE("/api-key/:id", userHandler.DeleteAPIKey)
 		// PUT /api/plan (plan id 1 = free, 2 = pro, 3 = enterprise)
 		api.PUT("/plan", userHandler.ChangePlan)
-
-		api.GET("/dashboard-stats", userHandler.GetDashboardStats)
 	}
 
 	// admin

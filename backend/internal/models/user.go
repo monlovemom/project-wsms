@@ -57,25 +57,3 @@ type UserResponse struct {
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 }
-
-type DashboardStats struct {
-	PlanName      string `json:"plan_name"`
-	ReqPerDay     int    `json:"req_per_day"`
-	ReqPerMonth   int    `json:"req_per_month"`
-	UsedToday     int    `json:"used_today"`
-	UsedThisMonth int    `json:"used_this_month"`
-}
-
-type Plan struct {
-	ID                int    `json:"id"`
-	PlanName          string `json:"plan_name"`
-	ReqPerMinute      int    `json:"req_per_minute"`
-	ReqPerDay         int    `json:"req_per_day"`
-	ReqPerMonth       int    `json:"req_per_month"`
-	Price             int    `json:"price"`
-	HasUsageDashboard bool   `json:"has_usage_dashboard"`
-	HasDataExport     bool   `json:"has_data_export"`
-	SLAGuarantee      string `json:"sla_guarantee"`
-	SupportLevel      string `json:"support_level"`
-	IsActive          bool   `json:"is_active"`
-}
