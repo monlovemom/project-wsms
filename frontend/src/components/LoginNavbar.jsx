@@ -64,7 +64,7 @@ export default function LoginNavbar() {
         /* กรณีไม่ได้ login ให้แสดงแบบรูปขวาที่คุณต้องการ */
         <div className="flex items-center gap-4">
           <Link to="/login" className="text-slate-400 hover:text-white font-bold text-sm">Login</Link>
-          <Link to="/register" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all">
+          <Link to="/login" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all">
             Get Started
           </Link>
         </div>

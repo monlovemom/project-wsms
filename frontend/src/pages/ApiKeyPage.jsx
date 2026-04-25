@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import LoginNavbar from '../components/LoginNavbar'
 
@@ -43,6 +44,7 @@ const formatTimeAgo = (value) => {
 }
 
 export default function ApiKeyPage() {
+  const navigate = useNavigate()
   const [keys, setKeys] = useState([])
   const [copiedId, setCopiedId] = useState(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -88,6 +90,12 @@ export default function ApiKeyPage() {
       if (userRes.ok) {
         const user = await userRes.json()
         setUserPlan(user)
+      } else if (userRes.status === 401) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setIsLoggedIn(false)
+        navigate('/login', { replace: true })
+        return
       }
 
       // Fetch recent API usage logs
@@ -115,8 +123,11 @@ export default function ApiKeyPage() {
     
     if (token) {
       fetchData(token)
+    } else {
+      setLoading(false)
+      navigate('/login', { replace: true })
     }
-  }, [])
+  }, [navigate])
 
   // Compute current plan data
   const currentPlan = {
