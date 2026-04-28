@@ -49,11 +49,15 @@ type ChangePlanRequest struct {
 }
 
 type UserResponse struct {
-	ID        int       `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	PlanName  string    `json:"plan_name"`
-	Role      Role      `json:"role"`
-	IsActive  bool      `json:"is_active"`
-	CreatedAt time.Time `json:"created_at"`
+	ID           int       `json:"id"`
+	Username     string    `json:"username"`
+	Email        string    `json:"email"`
+	PlanID       int       `json:"plan_id"`
+	PlanName     string    `json:"plan_name"`
+	ReqPerMinute int       `json:"req_per_minute"`
+	ReqPerDay    int       `json:"req_per_day"`
+	ReqPerMonth  int       `json:"req_per_month"`
+	Role         Role      `json:"role"`
+	IsActive     bool      `json:"is_active"`
+	CreatedAt    time.Time `json:"created_at"`
 }

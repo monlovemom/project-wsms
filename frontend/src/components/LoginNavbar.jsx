@@ -26,6 +26,15 @@ export default function LoginNavbar() {
     setIsLoaded(true)
   }, [])
 
+  const formatPlanName = (planName) => {
+    if (!planName) return ''
+    const normalized = String(planName).toLowerCase()
+    if (normalized === 'enterprise') return 'PREMIUM'
+    if (normalized === 'pro') return 'PRO'
+    if (normalized === 'free') return 'FREE'
+    return String(planName).toUpperCase()
+  }
+
   return (
     <nav className="border-b border-slate-800 bg-[#020617]/80 backdrop-blur-md sticky top-0 z-50">
   <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between relative">
@@ -54,12 +63,17 @@ export default function LoginNavbar() {
     {/* 3. ส่วนฝั่งขวา: User หรือ ปุ่ม Login */}
     <div className="flex items-center gap-4">
       {isLoaded && user ? (
-        <Link 
-          to="/profile"
-          className="text-white hover:text-red-400 font-bold transition-colors"
-        >
-          {user.username}
-        </Link>
+        <div className="flex items-center gap-3">
+          <span className="px-4 py-1 rounded-full text-xs font-black tracking-[0.2em] text-cyan-300 border border-cyan-500/60 bg-cyan-500/10">
+            {formatPlanName(user.plan_name)}
+          </span>
+          <Link 
+            to="/profile"
+            className="text-white hover:text-red-400 font-bold transition-colors"
+          >
+            {user.username}
+          </Link>
+        </div>
       ) : (
         /* กรณีไม่ได้ login ให้แสดงแบบรูปขวาที่คุณต้องการ */
         <div className="flex items-center gap-4">

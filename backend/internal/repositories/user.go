@@ -19,7 +19,12 @@ func (r *UserRepository) CreateUser(username, email, hashedPassword string) (*mo
 	query := `
 		INSERT INTO users (username, email, password, is_active, created_at)
 		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, username, email, (SELECT plan_name FROM plan WHERE id = plan_id), role, is_active, created_at
+		RETURNING id, username, email, plan_id,
+		  (SELECT plan_name FROM plan WHERE id = plan_id),
+		  (SELECT req_per_minute FROM plan WHERE id = plan_id),
+		  (SELECT req_per_day FROM plan WHERE id = plan_id),
+		  (SELECT req_per_month FROM plan WHERE id = plan_id),
+		  role, is_active, created_at
 	`
 
 	var user models.UserResponse
@@ -33,7 +38,11 @@ func (r *UserRepository) CreateUser(username, email, hashedPassword string) (*mo
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.PlanID,
 		&user.PlanName,
+		&user.ReqPerMinute,
+		&user.ReqPerDay,
+		&user.ReqPerMonth,
 		&user.Role,
 		&user.IsActive,
 		&user.CreatedAt,
@@ -170,7 +179,9 @@ func (r *UserRepository) GetUserByUsername(username string) (*models.User, error
 
 func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 	query := `
-		SELECT u.id, u.username, u.email, p.plan_name, u.role, u.is_active, u.created_at
+		SELECT u.id, u.username, u.email, u.plan_id, p.plan_name,
+		  p.req_per_minute, p.req_per_day, p.req_per_month,
+		  u.role, u.is_active, u.created_at
 		FROM users u JOIN plan p ON u.plan_id = p.id WHERE u.id = $1
 	`
 
@@ -179,7 +190,11 @@ func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.PlanID,
 		&user.PlanName,
+		&user.ReqPerMinute,
+		&user.ReqPerDay,
+		&user.ReqPerMonth,
 		&user.Role,
 		&user.IsActive,
 		&user.CreatedAt,
@@ -196,7 +211,9 @@ func (r *UserRepository) GetUserByID(id int) (*models.UserResponse, error) {
 
 func (r *UserRepository) GetAllUsers() ([]models.UserResponse, error) {
 	query := `
-		SELECT u.id, u.username, u.email, p.plan_name, u.role, u.is_active, u.created_at
+		SELECT u.id, u.username, u.email, u.plan_id, p.plan_name,
+		  p.req_per_minute, p.req_per_day, p.req_per_month,
+		  u.role, u.is_active, u.created_at
 		FROM users u JOIN plan p ON u.plan_id = p.id
 	`
 
@@ -213,7 +230,11 @@ func (r *UserRepository) GetAllUsers() ([]models.UserResponse, error) {
 			&user.ID,
 			&user.Username,
 			&user.Email,
+			&user.PlanID,
 			&user.PlanName,
+			&user.ReqPerMinute,
+			&user.ReqPerDay,
+			&user.ReqPerMonth,
 			&user.Role,
 			&user.IsActive,
 			&user.CreatedAt,

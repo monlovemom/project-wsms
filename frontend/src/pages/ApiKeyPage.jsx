@@ -43,6 +43,15 @@ const formatTimeAgo = (value) => {
   return `${days} วันที่แล้ว`
 }
 
+const formatPlanName = (planName) => {
+  if (!planName) return 'Starter Plan'
+  const normalized = String(planName).toLowerCase()
+  if (normalized === 'enterprise') return 'พรีเมียม'
+  if (normalized === 'pro') return 'โปร'
+  if (normalized === 'free') return 'ฟรี'
+  return planName
+}
+
 export default function ApiKeyPage() {
   const navigate = useNavigate()
   const [keys, setKeys] = useState([])
@@ -131,7 +140,7 @@ export default function ApiKeyPage() {
 
   // Compute current plan data
   const currentPlan = {
-    name: userPlan?.plan_name || "Starter Plan",
+    name: formatPlanName(userPlan?.plan_name),
     limit: userPlan?.req_per_month || 1000,
     used: quotaData?.used_this_month || 0,
     today: quotaData?.used_today || 0,

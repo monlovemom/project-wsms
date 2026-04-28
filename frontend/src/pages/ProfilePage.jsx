@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoginNavbar from '../components/LoginNavbar'
 
+const API_BASE_URL = 'http://localhost:8080/api'
+
 export default function ProfilePage() {
   // State สำหรับเก็บข้อมูลโปรไฟล์ของผู้ใช้
   const [user, setUser] = useState(null)
@@ -26,7 +28,7 @@ export default function ProfilePage() {
         }
 
         // ทำการ request ไปยัง API /api/me พร้อมส่ง Authorization Header
-        const response = await fetch('/api/me', {
+        const response = await fetch(`${API_BASE_URL}/me`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -100,6 +102,15 @@ export default function ProfilePage() {
     const year = date.getFullYear() + 543
 
     return `${day} ${month} ${year}`
+  }
+
+  const formatPlanName = (planName) => {
+    if (!planName) return '-'
+    const normalized = String(planName).toLowerCase()
+    if (normalized === 'enterprise') return 'Premium'
+    if (normalized === 'pro') return 'Pro'
+    if (normalized === 'free') return 'Free'
+    return planName
   }
 
   // ถ้าข้อมูลยังกำลังโหลด ให้แสดง Loading state
@@ -182,7 +193,7 @@ export default function ProfilePage() {
           <div className="flex flex-wrap gap-3">
             {/* Badge Plan Name */}
             <div className="px-4 py-2 bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 rounded-full text-sm font-bold uppercase tracking-wide">
-              {user.plan_name}
+              {formatPlanName(user.plan_name)}
             </div>
           </div>
         </div>
