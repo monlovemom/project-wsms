@@ -10,7 +10,7 @@ export default function ThailandMap({ onSelectProvince, currentWeather, lang, pr
 
   const getProvinceData = (geo) => {
   const geoName = geo.properties.name || geo.properties.NAME_1;
-  const cleanName = geoName.replace(" Metropolis", "").replace("Phra Nakhon Si Ayutthaya", "Ayutthaya");
+  const cleanName = geoName.replace(" Metropolis", "").replace(" Province", "");
   
   if (!provinces || provinces.length === 0) return { en: cleanName, th: cleanName };
 
