@@ -344,31 +344,31 @@ export default function ApiKeyPage() {
           </div>
 
           <aside className="space-y-6">
-            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2rem] p-8 shadow-2xl border border-white/10">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-8 shadow-xl">
               <div className="flex justify-between items-start mb-8">
                 <div>
                   <h3 className="text-lg font-bold text-white">{currentPlan.name}</h3>
-                  <p className="text-blue-200 text-xs font-medium uppercase tracking-widest mt-1">โควตารวม (Shared Quota)</p>
+                  <p className="text-slate-400 text-xs font-medium uppercase tracking-widest mt-1">โควตารวม (Shared Quota)</p>
                 </div>
-                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-2xl">🎁</div>
+                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl">🎁</div>
               </div>
               <div className="space-y-4">
-                <div className="flex justify-between text-xs font-bold text-blue-100 uppercase tracking-widest">
+                <div className="flex justify-between text-xs font-bold text-slate-300 uppercase tracking-widest">
                   <span>ใช้งานไปแล้ว</span>
                   <span>{currentPlan.used} / {currentPlan.limit} ครั้ง</span>
                 </div>
-                <div className="h-3 bg-black/20 rounded-full overflow-hidden">
+                <div className="h-3 bg-black/30 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-cyan-400 shadow-[0_0_15px_#22d3ee] transition-all duration-1000" 
                     style={{ width: `${(currentPlan.used / currentPlan.limit) * 100}%` }}
                   ></div>
                 </div>
                 
-                <div className="flex justify-between text-[10px] text-blue-200 font-bold mt-4 pt-4 border-t border-blue-400/20">
+                <div className="flex justify-between text-[10px] text-slate-400 font-bold mt-4 pt-4 border-t border-slate-700">
                   <span className="flex items-center gap-1">🔑 กุญแจ: {keys.length} / 5</span>
                   <span className="flex items-center gap-1">⚡ ความเร็ว: {currentPlan.rateLimit}</span>
                 </div>
-                <div className="text-right text-[10px] text-blue-200/70 font-bold">
+                <div className="text-right text-[10px] text-slate-500 font-bold">
                   รีเซ็ตใน 12 วัน
                 </div>
 
