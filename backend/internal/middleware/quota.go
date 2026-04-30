@@ -179,3 +179,44 @@ func QuotaMiddleware(quotaService *services.QuotaService) gin.HandlerFunc {
 		_ = quotaService.LogUsage(c.Request.Context(), userID)
 	}
 }
+
+// PlanRequired aborts with 403 if the user's plan is not in the allowed list.
+func PlanRequired(db *sql.DB, allowedPlans ...string) gin.HandlerFunc {
+	allowed := make(map[string]struct{}, len(allowedPlans))
+	for _, p := range allowedPlans {
+		allowed[p] = struct{}{}
+	}
+
+	return func(c *gin.Context) {
+		userID, err := getUserIDFromContext(c)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+
+		var planName string
+		err = db.QueryRow(
+			`SELECT p.plan_name FROM users u JOIN plan p ON p.id = u.plan_id WHERE u.id = $1 AND u.is_active = true`,
+			userID,
+		).Scan(&planName)
+		if err == sql.ErrNoRows {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "user or plan not found"})
+			return
+		}
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "could not validate plan"})
+			return
+		}
+
+		if _, ok := allowed[planName]; !ok {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error":         "this feature requires a pro or premium plan",
+				"current_plan":  planName,
+				"required_plan": allowedPlans,
+			})
+			return
+		}
+
+		c.Next()
+	}
+}
