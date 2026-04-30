@@ -116,7 +116,6 @@ export default function PricingPage() {
             features: [
                 "1000 requests / เดือน",
                 "ข้อมูล current weather",
-                "Community support",
                 "Basic Support",
             ],
             disabled: ["Forecast 7 วัน"],
