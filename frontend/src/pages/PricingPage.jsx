@@ -127,7 +127,7 @@ export default function PricingPage() {
             price: "฿299",
             desc: "/ เดือน",
             features: [
-                "10,000 requests / เดือน",
+                "30,000 requests / เดือน",
                 "Current + Forecast 7 วัน",
                 "Email support",
                 "Dashboard analytics",
@@ -138,10 +138,10 @@ export default function PricingPage() {
         {
             key: "enterprise",
             name: "Premium",
-            price: "฿999",
+            price: "฿599",
             desc: "/ เดือน",
             features: [
-                "Unlimited requests",
+                "150,000 requests / เดือน",
                 "ทุก endpoint",
                 "Priority support 24/7",
                 "Webhook alerts",
