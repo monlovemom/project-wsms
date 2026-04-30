@@ -114,7 +114,7 @@ export default function PricingPage() {
             price: "฿0",
             desc: "ฟรีตลอด",
             features: [
-                "100 requests / วัน",
+                "100 requests / เดือน",
                 "ข้อมูล current weather",
                 "Community support",
             ],
