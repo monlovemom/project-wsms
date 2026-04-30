@@ -114,11 +114,12 @@ export default function PricingPage() {
             price: "฿0",
             desc: "ฟรีตลอด",
             features: [
-                "100 requests / เดือน",
+                "1000 requests / เดือน",
                 "ข้อมูล current weather",
                 "Community support",
+                "Basic Support",
             ],
-            disabled: ["Forecast 7 วัน", "Priority support"],
+            disabled: ["Forecast 7 วัน"],
             button: "เริ่มต้นฟรี",
         },
         {
@@ -129,8 +130,7 @@ export default function PricingPage() {
             features: [
                 "30,000 requests / เดือน",
                 "Current + Forecast 7 วัน",
-                "Email support",
-                "Dashboard analytics",
+                "Email support",     
             ],
             disabled: ["Webhook alerts"],
             button: "สมัครเลย",
@@ -142,7 +142,6 @@ export default function PricingPage() {
             desc: "/ เดือน",
             features: [
                 "150,000 requests / เดือน",
-                "ทุก endpoint",
                 "Priority support 24/7",
                 "Webhook alerts",
                 "SLA 99.99%",
