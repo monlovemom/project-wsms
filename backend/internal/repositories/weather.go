@@ -19,12 +19,11 @@ func (r *WeatherRepository) GetLatestByProvince(province string, lang string) (*
 
 	nameCol := "p.name"
 	condCol := "wl.condition"
-	nameMatch := "LOWER(p.name) = LOWER($1)"
 	if lang == "en" {
 		nameCol = "p.name_en"
 		condCol = "wl.condition_en"
-		nameMatch = "LOWER(p.name_en) = LOWER($1)"
 	}
+	nameMatch := "LOWER(p.name) = LOWER($1) OR LOWER(p.name_en) = LOWER($1)"
 
 	query := `
 		SELECT

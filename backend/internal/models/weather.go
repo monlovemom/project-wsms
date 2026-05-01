@@ -46,3 +46,15 @@ type WeatherForecastResponse struct {
 	Current  WeatherData   `json:"current"`
 	Forecast []ForecastDay `json:"forecast"`
 }
+
+type WeatherForecastItem struct {
+	Province string        `json:"province"`
+	Current  WeatherData   `json:"current"`
+	Forecast []ForecastDay `json:"forecast"`
+}
+
+type WeatherForecastListResponse struct {
+	Status string                `json:"status"`
+	Data   []WeatherForecastItem `json:"data"`
+	Total  int                   `json:"total"`
+}

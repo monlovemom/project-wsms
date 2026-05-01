@@ -63,7 +63,16 @@ func (h *WeatherHandler) GetForecast(c *gin.Context) {
 	}
 
 	if province == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": "province query parameter is required"})
+		items, err := h.svc.GetAllForecast(lang)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "error": "could not get forecast data"})
+			return
+		}
+		c.JSON(http.StatusOK, models.WeatherForecastListResponse{
+			Status: "ok",
+			Data:   items,
+			Total:  len(items),
+		})
 		return
 	}
 

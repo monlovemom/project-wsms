@@ -30,7 +30,36 @@ func (s *WeatherService) GetForecast(province string, lang string) (*models.Weat
 		return nil, err
 	}
 
-	// Mock conditions vary by language
+	forecast := buildForecast(province, lang, current.Data)
+
+	return &models.WeatherForecastResponse{
+		Status:   "ok",
+		Province: current.Province,
+		Current:  current.Data,
+		Forecast: forecast,
+	}, nil
+}
+
+// GetAllForecast returns current weather + 7-day forecast for every province.
+func (s *WeatherService) GetAllForecast(lang string) ([]models.WeatherForecastItem, error) {
+	all, err := s.repo.GetAll(lang)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]models.WeatherForecastItem, len(all))
+	for i, w := range all {
+		items[i] = models.WeatherForecastItem{
+			Province: w.Province,
+			Current:  w.Data,
+			Forecast: buildForecast(w.Province, lang, w.Data),
+		}
+	}
+	return items, nil
+}
+
+// buildForecast generates a 7-day mock forecast based on current weather data.
+func buildForecast(province string, lang string, current models.WeatherData) []models.ForecastDay {
 	type condIcon struct{ cond, icon string }
 	var pool []condIcon
 	if lang == "en" {
@@ -62,7 +91,7 @@ func (s *WeatherService) GetForecast(province string, lang string) (*models.Weat
 		seed += int(ch)
 	}
 
-	base := current.Data.Temperature
+	base := current.Temperature
 	forecast := make([]models.ForecastDay, 7)
 	now := time.Now()
 
@@ -71,14 +100,14 @@ func (s *WeatherService) GetForecast(province string, lang string) (*models.Weat
 		offset := math.Sin(float64(seed+i)*0.7) * 3
 		tMin := math.Round((base-3+offset)*10) / 10
 		tMax := math.Round((base+3+offset)*10) / 10
-		hum := math.Round((current.Data.Humidity+float64((seed+i)%10)-5)*10) / 10
+		hum := math.Round((current.Humidity+float64((seed+i)%10)-5)*10) / 10
 		if hum < 30 {
 			hum = 30
 		}
 		if hum > 100 {
 			hum = 100
 		}
-		wind := math.Round((current.Data.WindSpeed+float64((seed+i*2)%6)-3)*10) / 10
+		wind := math.Round((current.WindSpeed+float64((seed+i*2)%6)-3)*10) / 10
 		if wind < 0 {
 			wind = 0
 		}
@@ -96,10 +125,5 @@ func (s *WeatherService) GetForecast(province string, lang string) (*models.Weat
 		}
 	}
 
-	return &models.WeatherForecastResponse{
-		Status:   "ok",
-		Province: current.Province,
-		Current:  current.Data,
-		Forecast: forecast,
-	}, nil
+	return forecast
 }
